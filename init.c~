@@ -24,7 +24,7 @@ int init(const char *user_id, const char *key, const char *endpoint)
 }
 
 
-const char* create_object(ACL *acl, Listable *listable, Meta *meta)
+xoconst char* create_object(ACL *acl, Listable *listable, Meta *meta)
 {
     
     HTTP_METHOD method = POST;

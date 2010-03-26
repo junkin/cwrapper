@@ -1,6 +1,6 @@
 GET /rest/objects HTTP/1.1
 Host: 192.168.1.50:8000
 Accept: */*
-x-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E
+x-emc-uid:7fd30d05ecc949b3b11a519f1cefffa9/A77303245322d48f0076
 date:Sun, 3 Jan 2010 19:53:44 GMT
-x-emc-signature:16prEk6OO9Hm+WG0cdtN5Lk8+L0=
+x-emc-signature:o1RI41lHKdORng7/ZfeNMph6wQI=
