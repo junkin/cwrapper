@@ -1,4 +1,5 @@
+LIBS= -lssl -lcrypto -lcurl
+SRC= init.c test.c
 
-
-all: @.c
-	gcc
+atmostest: $(SRC)
+	gcc  $(SRC) $(LIBS)
