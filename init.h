@@ -1,7 +1,7 @@
 #ifndef __AOL_INIT__
 #define __AOL_INIT__
 
-struct request {
+typedef struct requestval {
     char ** emc_headers;
     char * path;
     char * method;
@@ -10,26 +10,27 @@ struct request {
     char * date;
     char * uid;
     char * signature;
-};
+}request;
 
-enum HTTP_METHOD
+typedef enum HTTP_METHODval
     {
 	POST,
 	GET,
 	PUT,
 	DELETE
-    };
-struct ACL {
+    } HTTP_METHOD;
+
+typedef struct ACLval {
     char **permissions;
-};
+} ACL;
 
-struct Listable {
+typedef struct Listableval {
     char **key_values;
-};
+} Listable;
 
-struct Meta {
+typedef struct Metaval {
     char **key_values;
-};
+} Meta;
 
 	
 int init(const char *user_id, const char *key, const char *endpoint);

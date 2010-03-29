@@ -47,7 +47,7 @@ void get_date(char *formated_time)
 {
     //strftime adds a leading 0 to the day...
     time_t t = time(NULL);
-    tm *a = gmtime(&t);
+    struct tm *a = gmtime(&t);
     int position =strftime(formated_time, 256, "%a, %d %b %Y %H:%M:%S GMT", a);
 }
 
@@ -104,7 +104,8 @@ const char *http_request(HTTP_METHOD method, char **headers, int header_count)
 	char signature[1024];
 
 	struct curl_slist *chunk = NULL;
-	for(int i =0;i<header_count; i++) {
+	int i;
+	for(i=0;i<header_count; i++) {
 	    chunk = curl_slist_append(chunk, headers[i]);	
 	}
 	
@@ -140,7 +141,8 @@ int cstring_cmp(const void *a, const void *b)
 
 //take a string to lower case
 void lowercase(char *s) {
-    for(int i = 0; s[i]!=':'; i++)
+    int i;
+    for(i = 0; s[i]!=':'; i++)
 	s[i] = tolower(s[i]);
 }
 int build_hash_string (char *hash_string, const char *method, const char *content_type, const char *range,const char *date, const char *path, char **emc_sorted_headers, const int header_count) 
@@ -170,8 +172,8 @@ int build_hash_string (char *hash_string, const char *method, const char *conten
     }
 
     req_ptr+=sprintf(req_ptr,"%s\n",path);
-
-    for(int i = 0; i < header_count; i++) {
+    int i;
+    for(i = 0; i < header_count; i++) {
 	lowercase(emc_sorted_headers[i]);
 	if (i < header_count-1)
 	    {

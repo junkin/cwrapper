@@ -44,11 +44,11 @@ char *base64encode(char *normal, int length)
     return buff;
 }
 
-static const EVP_MD *evp_md = EVP_sha1();
+
 
 
 char *HMACSHA1(const unsigned char *hash_string, void *key, int key_len) {
-    
+const EVP_MD *evp_md = EVP_sha1();    
     unsigned int md_len;
     unsigned char md[EVP_MAX_MD_SIZE];
     char *newkey=base64decode((char*)key,key_len);

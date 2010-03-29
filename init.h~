@@ -27,9 +27,13 @@ struct Listable {
     char **key_values;
 };
 
+struct Meta {
+    char **key_values;
+};
+
 	
 int init(const char *user_id, const char *key, const char *endpoint);
-//const char* create_object(ACL *acl, Listable *listable, Meta *meta);
+const char* create_object(ACL *acl, Listable *listable, Meta *meta);
 const char* list_objects();
 int delete_object(const char *object_id);
 const char *http_request(HTTP_METHOD method, char **headers, int header_count) ;

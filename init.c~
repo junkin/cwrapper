@@ -24,7 +24,7 @@ int init(const char *user_id, const char *key, const char *endpoint)
 }
 
 
-xoconst char* create_object(ACL *acl, Listable *listable, Meta *meta)
+const char* create_object(ACL *acl, Listable *listable, Meta *meta)
 {
     
     HTTP_METHOD method = POST;
@@ -47,7 +47,7 @@ void get_date(char *formated_time)
 {
     //strftime adds a leading 0 to the day...
     time_t t = time(NULL);
-    tm *a = gmtime(&t);
+    struct tm *a = gmtime(&t);
     int position =strftime(formated_time, 256, "%a, %d %b %Y %H:%M:%S GMT", a);
 }
 
