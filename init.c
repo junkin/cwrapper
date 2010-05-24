@@ -1,6 +1,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 #include "util.h"
 #include "init.h"
@@ -71,9 +72,8 @@ const char *http_request_ns(credentials *c, http_method method, char *uri, char 
 
 int cstring_cmp(const void *a, const void *b)
 {
-    const char **ia = (const char **)a;
-    const char **ib = (const char **)b;
-    return strcmp(*ia, *ib);
+    return strcmp(* (char * const *) a, * (char * const *) b);
+
     /* strcmp functions works exactly as expected from                                                                                                                                                            
        comparison function */
 }
