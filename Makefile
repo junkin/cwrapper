@@ -1,5 +1,5 @@
 LIBS= -lssl -lcrypto -lcurl
-SRC= init.c test.c util.c
+SRC= init.c test.c util.c transport.c
 
 atmostest: $(SRC)
-	gcc  $(SRC) $(LIBS)
+	gcc -g $(SRC) $(LIBS)

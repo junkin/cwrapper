@@ -1,7 +1,11 @@
 #ifndef __AOL_INIT__
 #define __AOL_INIT__
 
+#include "transport.h"
+
+
 typedef struct requestval {
+    credentials c;
     char ** emc_headers;
     char * path;
     char * method;
@@ -10,41 +14,40 @@ typedef struct requestval {
     char * date;
     char * uid;
     char * signature;
-}request;
-
-typedef enum HTTP_METHODval
-    {
-	POST,
-	GET,
-	PUT,
-	DELETE
-    } HTTP_METHOD;
+} request;
 
 typedef struct ACLval {
     char **permissions;
-} ACL;
+} acl;
 
-typedef struct Listableval {
-    char **key_values;
-} Listable;
-
+//metavalues are max size 1k
 typedef struct Metaval {
-    char **key_values;
-} Meta;
+    char key[1024];
+    char value[1024];
+    int listable;
+} meta;
 
-	
-int init(const char *user_id, const char *key, const char *endpoint);
-const char* create_object(ACL *acl, Listable *listable, Meta *meta);
-const char* list_objects();
-int delete_object(const char *object_id);
-const char *http_request(HTTP_METHOD method, char **headers, int header_count) ;
-int build_hash_string (char *hash_string, const char *method, const char *content_type, const char *range,const char *date, const char *path, char **emc_sorted_headers, const int header_count);
 
-int do_request(request);
 
-//MetaData operations
-int object_set_listable_meta(const char *object_name, const char *key, const char *val);
-int object_get_listable_meta(const char *object_name);
+
+//Namespace
+const char* create_ns(credentials *c, char * path, acl *acl, meta *meta);
+const char* list_ns(credentials *c, char * path);
+const char* update_ns(credentials *c, char * path, acl *acl, void* data, meta *meta);
+int delete_ns(credentials *c, char *object_id);
+int set_meta_ns(credentials *c, const char *object_name, const char *key, const char *val);
+int get_meta_ns(credentials *c,const char *object_name);
+
+//Object
+
+
+//atmos specific helpers
+credentials* init_ws(const char *user_id, const char *key, const char *endpoint);
+meta create_meta(char* key, char* val, int listable);
+
+
+//generic ´helper functions
+int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *path, char **emc_sorted_headers, const int header_count);
 char*  sign(char *hash_string, const char *key);
 void get_date(char *formated);
 
