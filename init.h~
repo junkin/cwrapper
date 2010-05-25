@@ -1,11 +1,8 @@
 #ifndef __AOL_INIT__
 #define __AOL_INIT__
 
-typedef struct credentialsval {
-    char tokenid[120];
-    char secret[120];
-    char accesspoint[120];
-} credentials;
+#include "transport.h"
+
 
 typedef struct requestval {
     credentials c;
@@ -19,16 +16,6 @@ typedef struct requestval {
     char * signature;
 } request;
 
-typedef enum http_methodval   {
-	POST,
-	GET,
-	PUT,
-	DELETE,
-	HEAD,
-	OPTIONS
-} http_method;
-
-
 typedef struct ACLval {
     char **permissions;
 } acl;
@@ -40,12 +27,11 @@ typedef struct Metaval {
     int listable;
 } meta;
 
-typedef struct PD {
-    void *data;
-    int datsize;
-} postdata;
+typedef listing {
+    char name[256];
+    char type[128];
+} listing;
 
-#define HTTP_HDR_SIZE 4096
 
 //Namespace
 const char* create_ns(credentials *c, char * path, acl *acl, meta *meta);
@@ -64,8 +50,6 @@ meta create_meta(char* key, char* val, int listable);
 
 
 //generic ´helper functions
-const char *http_request(credentials *c,http_method method, char *path,char **headers, int header_count, postdata*) ;
-const char *http_request_ns(credentials *c,http_method method, char *path,char **headers, int header_count, postdata*) ;
 int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *path, char **emc_sorted_headers, const int header_count);
 char*  sign(char *hash_string, const char *key);
 void get_date(char *formated);

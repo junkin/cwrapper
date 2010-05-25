@@ -7,6 +7,7 @@ typedef struct credentialsval {
     char secret[120];
     char accesspoint[120];
 } credentials;
+
 typedef enum http_methodval   {
 	POST,
 	GET,
@@ -21,6 +22,11 @@ typedef struct PD {
     int datsize;
 } postdata;
 
+typedef struct hdrval {
+    void *header_data;
+    size_t header_size;
+    void *next_header;
+} hdr;
 
 #define true 1
 #define false 0

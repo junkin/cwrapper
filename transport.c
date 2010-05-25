@@ -1,14 +1,24 @@
 #include "curl/curl.h"
 #include "transport.h"
 
-size_t writefunc(void *ptr, size_t size, size_t nmemb, FILE *stream)
+
+
+size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     printf("%s\n", (char*)ptr);
+    return size*nmemb;
 }
 
-size_t headerfunc(void *ptr, size_t size, size_t nmemb, FILE *stream)
+size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-    printf("headerfunc CB: %s\n", (char*)ptr);
+    void *current_header = malloc(sizeof(hdr));
+    /*current_header->header_data = malloc(size);
+    strncpy(current_header->header_data, ptr, size);
+    current_header->prev_header = stream;
+    current_header->next_header = NULL;
+    stream +=current_header;*/
+    printf("headerfunc CB: %s\n", ptr);
+    return size*nmemb;
 }
 
 
@@ -35,7 +45,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char **h
     char errorbuffer[1024*1024];
     // set up flags this should move into transport layer
     if (curl) {
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connect_timeout);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
@@ -44,12 +54,14 @@ const char *http_request(credentials *c, http_method method, char *uri, char **h
 	curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writefunc);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &headerfunc);
-	FILE *f = fopen("target.txt", "wb");
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
+	hdr *responseheaders_head = NULL;
+	void *responseheaders = responseheaders; // index;
+	void *responsedata = NULL;
+	
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, responsedata);
+	curl_easy_setopt(curl, CURLOPT_WRITEHEADER, responseheaders);
 
 	char request[1024*1024];//hehe
-
-
 	char hash_string[1024];
 	int hash_length = build_hash_string(hash_string, method, "application/octet-stream",NULL,NULL,uri, headers,header_count);
 	char sig[1024];

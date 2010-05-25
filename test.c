@@ -101,8 +101,8 @@ int more(){
      const char *object_id = list_ns(c, "/");
     // printf("created object with objectid %s\n", object_id);
     
-    char *testdir = "/capi_dior";
-    printf ("creating dir %s\n", testdir);
+     //char *testdir = "/capi_dior";
+    //    printf ("creating dir %s\n", testdir);
     //    create_ns(c, testdir, NULL,  NULL);
     //    list_ns(c, testdir);    
     //delete_ns(c, testdir);

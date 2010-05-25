@@ -27,7 +27,10 @@ typedef struct Metaval {
     int listable;
 } meta;
 
-
+typedef struct listing {
+    char name[256];
+    char type[128];
+} listing;
 
 
 //Namespace

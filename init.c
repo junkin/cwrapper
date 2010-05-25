@@ -44,14 +44,15 @@ const char* update_ns (credentials *c, char * uri, acl *acllist, void *data, met
 
 }
 
+//what should this return ...
+//
 const char* list_ns(credentials *c,char * uri) 
-//const char* list_objects(char *objectid) 
 {
     http_method method =GET;
     char *headers[20];    
     
     http_request_ns (c, method, uri, headers, 0, NULL);
-
+    
 }
 
 
