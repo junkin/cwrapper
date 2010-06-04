@@ -10,7 +10,6 @@
 
 static const char *hdr_listable_meta="x-emc-listable-meta:";
 static const char *hdr_meta="x-emc-meta:";
-static const char *namespace_uri = "/rest/namespace";
 static const char *methods[] = {"POST", "GET","PUT", "DELETE","HEAD","OPTIONS"};
 
 credentials* init_ws(const char *user_id, const char *key, const char *endpoint) 
@@ -24,51 +23,43 @@ credentials* init_ws(const char *user_id, const char *key, const char *endpoint)
 }
 
 
-const char* create_ns(credentials *c, char * path,acl *acl, meta *meta)
+void create_ns(credentials *c, char * uri, char *content_type ,acl *acl, meta *meta, void *ws_result)
 {
     
     http_method method = POST;
-
     char *headers[20];
-    http_request_ns(c, method,path, headers,0, NULL);
+    http_request_ns(c, method,uri,content_type, headers,0, NULL, ws_result);
     
 }
 
 
-const char* update_ns (credentials *c, char * uri, acl *acllist, void *data, meta *metadata) 
+void  update_ns (credentials *c, char * uri, char *content_type, acl *acllist, void *data, meta *metadata, void *ws_result) 
 {
     char *headers[20];  
     http_method method = PUT;
     
-    http_request_ns(c, method, uri, headers, 0, data);
+    http_request_ns(c, method, uri, content_type,headers, 0, data, ws_result);
 
 }
 
 //what should this return ...
 //
-const char* list_ns(credentials *c,char * uri) 
+void list_ns(credentials *c,char * uri, void* ws_result) 
 {
     http_method method =GET;
     char *headers[20];    
     
-    http_request_ns (c, method, uri, headers, 0, NULL);
+    http_request_ns (c, method, uri, NULL, headers, 0, NULL, ws_result);
     
 }
 
 
-int delete_ns(credentials *c, char *path) 
+int delete_ns(credentials *c, char *uri, void *ws_result) 
 {
     http_method method = DELETE;
     char * headers[20];
-    http_request_ns (c, method, path, headers, 0, NULL);
+    http_request_ns (c, method, uri,NULL, headers, 0, NULL, ws_result);
     
-}
-const char *http_request_ns(credentials *c, http_method method, char *uri, char **headers, int header_count, postdata * data) {
-
-    char *ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri));
-    sprintf(ns_uri,"%s%s",namespace_uri, uri);
-    http_request(c, method, ns_uri, headers, header_count, data);    
-    free((char*)ns_uri);
 }
 
 int cstring_cmp(const void *a, const void *b)
@@ -94,7 +85,7 @@ void get_date(char *formated_time)
     int position =strftime(formated_time, 256, "%a, %d %b %Y %H:%M:%S GMT", a);
 }
 
-int build_hash_string (char *hash_string, http_method method, const char *content_type, const char *range,const char *date, const char *path, char **emc_sorted_headers, const int header_count) 
+int build_hash_string (char *hash_string, http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count) 
 {
     char *req_ptr=hash_string;
 
@@ -120,7 +111,7 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
 	req_ptr+=sprintf(req_ptr,"\n");
     }
 
-    req_ptr+=sprintf(req_ptr,"%s\n",path);
+    req_ptr+=sprintf(req_ptr,"%s\n",uri);
     int i;
     for(i = 0; i < header_count; i++) {
 	lowercase(emc_sorted_headers[i]);

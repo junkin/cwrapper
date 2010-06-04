@@ -34,10 +34,10 @@ typedef struct listing {
 
 
 //Namespace
-const char* create_ns(credentials *c, char * path, acl *acl, meta *meta);
-const char* list_ns(credentials *c, char * path);
-const char* update_ns(credentials *c, char * path, acl *acl, void* data, meta *meta);
-int delete_ns(credentials *c, char *object_id);
+void create_ns(credentials *c, char * uri, char *content_type, acl *acl, meta *meta, void *ws_result);
+void list_ns(credentials *c, char * uri, void* ws_result);
+void update_ns(credentials *c, char * uri, char *content_type, acl *acl, void* data, meta *meta, void *ws_result);
+int delete_ns(credentials *c, char *object_id, void *ws_result);
 int set_meta_ns(credentials *c, const char *object_name, const char *key, const char *val);
 int get_meta_ns(credentials *c,const char *object_name);
 
@@ -50,7 +50,7 @@ meta create_meta(char* key, char* val, int listable);
 
 
 //generic ´helper functions
-int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *path, char **emc_sorted_headers, const int header_count);
+int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count);
 char*  sign(char *hash_string, const char *key);
 void get_date(char *formated);
 

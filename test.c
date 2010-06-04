@@ -8,15 +8,17 @@
 
 
 void testhmac() {
-
+    printf("testhmac\n");
     const char *teststring="POST\napplication/octet-stream\n\nThu, 05 Jun 2008 16:38:19 GMT\n/rest/objects\nx-emc-date:Thu, 05 Jun 2008 16:38:19 GMT\nx-emc-groupacl:other=NONE\nx-emc-listable-meta:part4/part7/part8=quick\nx-emc-meta:part1=buy\nx-emc-uid: 6039ac182f194e15b9261d73ce044939/user1\nx-emc-useracl:john=FULL_CONTROL,mary=WRITE";
     const char *testkey="LJLuryj6zs8ste6Y3jTGQp71xq0=";
     const char *testresult="gk5BXkLISd0x5uXw5uIE80XzhVY=";
     assert(strcmp(HMACSHA1((const unsigned char*)teststring, (char*)testkey, strlen(testkey)),testresult)==0);
+
+    printf("finished testhmac\n");
 }
 
 void testbuildhashstring() {
-    
+    printf("testbuild_hash_string!\n"); 
     const char *teststring="POST\napplication/octet-stream\n\nThu, 05 Jun 2008 16:38:19 GMT\n/rest/objects\nx-emc-date:Thu, 05 Jun 2008 16:38:19 GMT\nx-emc-groupacl:other=NONE\nx-emc-listable-meta:part4/part7/part8=quick\nx-emc-meta:part1=buy\nx-emc-uid: 6039ac182f194e15b9261d73ce044939/user1\nx-emc-useracl:john=FULL_CONTROL,mary=WRITE";
     
     int header_count=0;
@@ -45,6 +47,8 @@ void testbuildhashstring() {
     char string[1024*1024];
     build_hash_string(string, POST,"application/octet-stream",NULL,"Thu, 05 Jun 2008 16:38:19 GMT", "/rest/objects",headers,header_count);
     assert(strcmp(string, teststring) == 0 );
+    printf("%s\n", string);
+    printf("Finished building hash string\n");
 }
 
 void testjava() {
@@ -76,36 +80,45 @@ void testjshashstring() {
 }
 
 
-int more();
-int main() { 
-    
-    testbuildhashstring();
-    testhmac();
-    testjava();
-    more();
-    testjshashstring();
-}
+
 
 
 int more(){
 
     const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
     const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
-
     const char *endpoint = "accesspoint.emccis.com";
-    char *buf = base64encode((char*)user_id, strlen(user_id));
-    char *buf2 = base64decode(buf,strlen(buf));
-    
-    //const char *object_id = create_object(NULL, NULL,NULL);
-    credentials *c = init_ws(user_id, key, endpoint);
-     const char *object_id = list_ns(c, "/");
-    // printf("created object with objectid %s\n", object_id);
-    
-     //char *testdir = "/capi_dior";
-    //    printf ("creating dir %s\n", testdir);
-    //    create_ns(c, testdir, NULL,  NULL);
-    //    list_ns(c, testdir);    
-    //delete_ns(c, testdir);
-    //list_ns(c, testdir);    
 
+    credentials *c = init_ws(user_id, key, endpoint);
+    ws_result result;
+    
+    result_init(&result);
+    //list_ns(c, "/", &result);
+    printf("%s\n", result.response_body);
+    result_deinit(&result);
+    char *testdir = "/capi_dior";
+    printf ("creating dir %s\n", testdir);
+    result_init(&result);
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    result_deinit(&result);
+    result_init(&result);
+    list_ns(c, testdir,&result);    
+    result_deinit(&result);
+    result_init(&result);
+    delete_ns(c, testdir, &result);
+    result_deinit(&result);
+    result_init(&result);
+    list_ns(c, testdir, &result);    
+    result_deinit(&result);
+
+    //    */
+}
+
+int main() { 
+    
+    //testbuildhashstring();
+    //testhmac();
+    //testjava();
+        more();
+    //testjshashstring();
 }
