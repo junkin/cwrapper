@@ -19,7 +19,7 @@ typedef enum http_methodval   {
 
 typedef struct PD {
     void *data;
-    int datsize;
+    int body_size;
 } postdata;
 
 typedef struct hdrval {

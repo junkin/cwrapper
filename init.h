@@ -36,7 +36,7 @@ typedef struct listing {
 //Namespace
 void create_ns(credentials *c, char * uri, char *content_type, acl *acl, meta *meta, void *ws_result);
 void list_ns(credentials *c, char * uri, void* ws_result);
-void update_ns(credentials *c, char * uri, char *content_type, acl *acl, void* data, meta *meta, void *ws_result);
+void update_ns(credentials *c, char * uri, char *content_type, acl *acl, postdata* data, meta *meta, void *ws_result);
 int delete_ns(credentials *c, char *object_id, void *ws_result);
 int set_meta_ns(credentials *c, const char *object_name, const char *key, const char *val);
 int get_meta_ns(credentials *c,const char *object_name);

@@ -91,27 +91,66 @@ int more(){
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    
-    result_init(&result);
-    //list_ns(c, "/", &result);
-    printf("%s\n", result.response_body);
-    result_deinit(&result);
-    char *testdir = "/capi_dior";
-    printf ("creating dir %s\n", testdir);
+    char *testdir = "/capi_dior5";
+
+    //*** Create
     result_init(&result);
     create_ns(c, testdir, NULL,NULL,  NULL, &result);
-    result_deinit(&result);
-    result_init(&result);
-    list_ns(c, testdir,&result);    
-    result_deinit(&result);
-    result_init(&result);
-    delete_ns(c, testdir, &result);
-    result_deinit(&result);
-    result_init(&result);
-    list_ns(c, testdir, &result);    
+    printf("code: %d\n", result.return_code);
     result_deinit(&result);
 
-    //    */
+    //*** LIST
+    result_init(&result);
+    list_ns(c, testdir,&result);    
+    printf("datum%d: %s\n", result.body_size,result.response_body);
+    printf("code: %d\n", result.return_code);
+
+    result_deinit(&result);
+
+    //*** Delete
+    result_init(&result);
+    delete_ns(c, testdir, &result);
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
+
+    //*** LIST
+    result_init(&result);
+    list_ns(c, testdir, &result);    
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
+
+    //*** Create
+    result_init(&result);
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
+
+    //*** UPDATE
+    result_init(&result);
+    char data[] = "This is testing data for update:";
+    postdata d;
+    d.data=data;
+    d.body_size = strlen(data);
+    update_ns(c, testdir,NULL, NULL, &d, NULL,&result);    
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
+    //*** LIST
+    result_init(&result);
+    list_ns(c, testdir,&result);    
+    printf("datum%d: %s\n", result.body_size,result.response_body);
+    printf("code: %d\n", result.return_code);
+
+    //*** Delete
+    result_init(&result);
+    delete_ns(c, testdir, &result);
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
+
+    //*** LIST
+    result_init(&result);
+    list_ns(c, testdir, &result);    
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
 }
 
 int main() { 

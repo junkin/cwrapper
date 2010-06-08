@@ -7,6 +7,14 @@
 static const char *namespace_uri = "/rest/namespace";
 static const char *object_uri = "/rest/objects";
 
+size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    postdata *ud = (postdata*)stream;
+    memcpy(ptr, ud->data, ud->body_size);
+
+    return ud->body_size;
+}
+
 size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     ws_result *ws = (ws_result*)stream;
@@ -17,14 +25,12 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
     if(ws->body_size== 0) {
 	ws->body_size+=mem_required;
 	ws->response_body = malloc(ws->body_size);
-	
     } else {
 	ws->body_size+= mem_required;
 	ws->response_body = reallocf(ws->response_body, ws->body_size);
     }
 
     memcpy(ws->response_body+data_offset,ptr, mem_required);
-
     return size*nmemb;
 }
 
@@ -37,7 +43,6 @@ size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
     if(ws->header_size== 0) {
 	ws->header_size+=mem_required;
 	ws->headers = malloc(ws->header_size);
-	
     } else {
 	ws->header_size+= mem_required;
 	ws->headers = reallocf(ws->headers, ws->header_size);
@@ -72,6 +77,7 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
 {
     char end_url[256];
+    CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
     CURL  *curl = curl_easy_init();
     CURLcode result_code;
     struct curl_httppost *formpost=NULL;
@@ -100,28 +106,36 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     snprintf(endpoint_url, endpoint_size, "%s%s", c->accesspoint, uri);
 
     char errorbuffer[1024*1024];
-    // set up flags this should move into transport layer
+    // set up flags this should move into transport layercyrk
     if (curl) {
+	curl_version_info_data *version_data = curl_version_info(CURLVERSION_NOW);
 
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+	struct curl_slist *chunk = NULL;
+
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
+	curl_easy_setopt(curl, CURLOPT_URL, endpoint_url);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 0);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connect_timeout);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
-	curl_easy_setopt(curl, CURLOPT_URL, endpoint_url);
 	curl_easy_setopt(curl, CURLOPT_FAILONERROR, false);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writefunc);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &headerfunc);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, ws_result);
 	curl_easy_setopt(curl, CURLOPT_WRITEHEADER, ws_result);
-
+	
 	switch(method) {
 
 	case POST:
-	    curl_easy_setopt(curl, CURLOPT_POST, 1l);	
+	    curl_easy_setopt(curl, CURLOPT_HTTPPOST, 1l);	
+	    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 0L);
+	    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, NULL);
+
 	    break;
 	case PUT:
 	    curl_easy_setopt(curl, CURLOPT_PUT, 1L); 
+	    curl_easy_setopt(curl, CURLOPT_READDATA, data);
+	    curl_easy_setopt(curl, CURLOPT_READFUNCTION, readfunc);
 	    break;
 	case DELETE:
 	    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"); 
@@ -132,11 +146,12 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	}
 	
 	char hash_string[1024];
-	int hash_length = build_hash_string(hash_string, method, content_type,NULL,NULL,uri, headers,header_count);
-	printf("\n\n%s\n\n", hash_string);
+	char * range = NULL;//FIXME
+	int hash_length = build_hash_string(hash_string, method, content_type, range,NULL,uri, headers,header_count);
 	char signature[1024];
 	char content_type_header[1024];
-	struct curl_slist *chunk = NULL;
+
+
 	int i;
 	for(i=0;i<header_count; i++) {
 	    chunk = curl_slist_append(chunk, headers[i]);	
@@ -144,11 +159,22 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	snprintf(signature,1024,"X-Emc-Signature:%s",sign(hash_string,c->secret));
 	snprintf(content_type_header, 1024,"content-type:%s", content_type); 
 	curl_slist_append(chunk,"Expect:");
-	result_code = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+	curl_slist_append(chunk,"Transfer-Encoding:");
 	curl_slist_append(chunk, content_type_header);
 	curl_slist_append(chunk,signature);
+
+
+	if(data) {
+	    char content_length_header[1024];
+	    snprintf(content_length_header,1024, "content-length: %d", data->body_size);
+	    curl_slist_append(chunk,content_length_header);
+		
+	}
+	result_code = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 	result_code = curl_easy_perform(curl);
-	ws_result->return_code = result_code;
+	
+	int http_response_code = 0;
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &ws_result->return_code);
 	curl_easy_cleanup(curl);
     }
     free(endpoint_url);

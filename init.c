@@ -32,18 +32,14 @@ void create_ns(credentials *c, char * uri, char *content_type ,acl *acl, meta *m
     
 }
 
-
-void  update_ns (credentials *c, char * uri, char *content_type, acl *acllist, void *data, meta *metadata, void *ws_result) 
+void  update_ns (credentials *c, char * uri, char *content_type, acl *acllist, postdata *data, meta *metadata, void *ws_result) 
 {
     char *headers[20];  
-    http_method method = PUT;
-    
-    http_request_ns(c, method, uri, content_type,headers, 0, data, ws_result);
+    http_method method = PUT;    
+    http_request_ns(c, method, uri, content_type,headers, 0, (void*)data, ws_result);
 
 }
 
-//what should this return ...
-//
 void list_ns(credentials *c,char * uri, void* ws_result) 
 {
     http_method method =GET;
@@ -65,15 +61,11 @@ int delete_ns(credentials *c, char *uri, void *ws_result)
 int cstring_cmp(const void *a, const void *b)
 {
     return strcmp(* (char * const *) a, * (char * const *) b);
-
-    /* strcmp functions works exactly as expected from                                                                                                                                                            
-       comparison function */
 }
 
-//take a string to lower case
 void lowercase(char *s) {
-    int i;
-    for(i = 0; s[i]!=':'; i++)
+    int i = 0;
+    for( ; s[i]!=':'; i++)
 	s[i] = tolower(s[i]);
 }
 
