@@ -175,7 +175,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	for(i=0;i<header_count; i++) {
 	    chunk = curl_slist_append(chunk, headers[i]);	
 	}
-	snprintf(signature,1024,"X-Emc-Signature:%s",sign(hash_string,c->secret));
+	snprintf(signature,1024,"X-Emc-Signature:%s",(char*)sign(hash_string,c->secret));
 	snprintf(content_type_header, 1024,"content-type:%s", content_type); 
 	curl_slist_append(chunk,"Expect:");
 	curl_slist_append(chunk,"Transfer-Encoding:");
