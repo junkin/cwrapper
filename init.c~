@@ -32,18 +32,15 @@ void create_ns(credentials *c, char * uri, char *content_type ,acl *acl, meta *m
     
 }
 
-
-void  update_ns (credentials *c, char * uri, char *content_type, acl *acllist, void *data, meta *metadata, void *ws_result) 
+void  update_ns (credentials *c, char * uri, char *content_type, acl *acllist, postdata *data, meta *metadata, void *ws_result) 
 {
     char *headers[20];  
-    http_method method = PUT;
+    http_method method = PUT;    
     
-    http_request_ns(c, method, uri, content_type,headers, 0, data, ws_result);
+    http_request_ns(c, method, uri, content_type,headers, 0, (void*)data, ws_result);
 
 }
 
-//what should this return ...
-//
 void list_ns(credentials *c,char * uri, void* ws_result) 
 {
     http_method method =GET;

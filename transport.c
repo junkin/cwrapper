@@ -9,10 +9,13 @@ static const char *object_uri = "/rest/objects";
 
 size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-    postdata *ud = (postdata*)stream;
-    memcpy(ptr, ud->data, ud->body_size);
 
-    return ud->body_size;
+    if(stream) {
+	postdata *ud = (postdata*)stream;
+	memcpy(ptr, ud->data, ud->body_size);
+	return ud->body_size;
+    }
+    return 0;
 }
 
 size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -27,7 +30,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 	ws->response_body = malloc(ws->body_size);
     } else {
 	ws->body_size+= mem_required;
-	ws->response_body = reallocf(ws->response_body, ws->body_size);
+	ws->response_body = realloc(ws->response_body, ws->body_size);
     }
 
     memcpy(ws->response_body+data_offset,ptr, mem_required);
@@ -45,7 +48,7 @@ size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 	ws->headers = malloc(ws->header_size);
     } else {
 	ws->header_size+= mem_required;
-	ws->headers = reallocf(ws->headers, ws->header_size);
+	ws->headers = realloc(ws->headers, ws->header_size);
     }
     memcpy(ws->headers+data_offset,ptr, mem_required);
     return size*nmemb;
@@ -90,7 +93,6 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     snprintf(uidheader,1024,"X-Emc-Uid:%s",c->tokenid);    
     char groupaclheader[1024];
     snprintf(groupaclheader,1024,"X-Emc-groupacl:other=NONE");    
-    
     headers[header_count++] = dateheader;
     //FIXME groupacl headers breaks sig string
     //headers[header_count++] = groupaclheader;
@@ -136,6 +138,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	    curl_easy_setopt(curl, CURLOPT_PUT, 1L); 
 	    curl_easy_setopt(curl, CURLOPT_READDATA, data);
 	    curl_easy_setopt(curl, CURLOPT_READFUNCTION, readfunc);
+	    
 	    break;
 	case DELETE:
 	    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"); 

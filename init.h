@@ -20,12 +20,35 @@ typedef struct ACLval {
     char **permissions;
 } acl;
 
+#define TIMESIZE 40
+#define UIDSIZE  44
+#define POLICYSIZE  44
+#define GIDSIZE  44
+#define OBJECTIDSIZE  44
+
+typedef struct System_meta {
+    char atime[TIMESIZE];
+    char mtime[TIMESIZE];
+    char ctime[TIMESIZE];
+    char itime[TIMESIZE];
+    char type[1024];
+    char uid[UIDSIZE];
+    char gid[GIDSIZE];
+    char objectid[OBJECTIDSIZE];
+    char objectname[1024];
+    int size;
+    int nlink;
+    char policyname[POLICYSIZE];
+} system_meta;
+
+
 //metavalues are max size 1k
 typedef struct Metaval {
     char key[1024];
     char value[1024];
     int listable;
-} meta;
+    void *next;
+} user_meta;
 
 typedef struct listing {
     char name[256];
@@ -34,19 +57,21 @@ typedef struct listing {
 
 
 //Namespace
-void create_ns(credentials *c, char * uri, char *content_type, acl *acl, meta *meta, void *ws_result);
+void create_ns(credentials *c, char * uri, char *content_type, acl *acl, user_meta *meta, void *ws_result);
 void list_ns(credentials *c, char * uri, void* ws_result);
-void update_ns(credentials *c, char * uri, char *content_type, acl *acl, postdata* data, meta *meta, void *ws_result);
+void update_ns(credentials *c, char * uri, char *content_type, acl *acl, postdata* data, user_meta *meta, void *ws_result);
 int delete_ns(credentials *c, char *object_id, void *ws_result);
 int set_meta_ns(credentials *c, const char *object_name, const char *key, const char *val);
 int get_meta_ns(credentials *c,const char *object_name);
 
+//namespace metadata
+int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta *meta, void * ws_result);
 //Object
 
 
 //atmos specific helpers
 credentials* init_ws(const char *user_id, const char *key, const char *endpoint);
-meta create_meta(char* key, char* val, int listable);
+void create_meta(char* key, char* val, int listable, user_meta*);
 
 
 //generic ´helper functions

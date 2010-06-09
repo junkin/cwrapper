@@ -13,7 +13,6 @@ void testhmac() {
     const char *testkey="LJLuryj6zs8ste6Y3jTGQp71xq0=";
     const char *testresult="gk5BXkLISd0x5uXw5uIE80XzhVY=";
     assert(strcmp(HMACSHA1((const unsigned char*)teststring, (char*)testkey, strlen(testkey)),testresult)==0);
-
     printf("finished testhmac\n");
 }
 
@@ -52,7 +51,7 @@ void testbuildhashstring() {
 }
 
 void testjava() {
-    //   const char *teststring = "GET\n\n\nSun, 3 Jan 2010 20:26:59 GMT\n/rest/namespace/\nx-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
+
     //const char *teststring = "GET\n\n\nSun, 3 Jan 2010 20:22:56 GMT\n/rest/objects\nx-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
     //const char *teststring = "GET\n\n\nSun, 3 Jan 2010 21:10:01 GMT\n/rest/namespace/\nx-emc-uid: 0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
     //const char *teststring = "GET\napplication/octet-stream\n\nSun, 3 Jan 2010 23:36:00 GMT\n/rest/namespace/\nx-emc-date:Sun, 3 Jan 2010 23:36:00 GMT\nx-emc-uid: 0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
@@ -68,22 +67,7 @@ void testjava() {
     printf(":%s=%s\n", key, testresult);
 }
 
-void testjshashstring() {
-    const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    const char *testkey = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
-    
-    //    char *key = sign((char*)teststring, (char*)testkey);    const char *teststring="POST\n\n\nThu, 15 Apr 2010 12:53:43 GMT\n/rest/objects/js/jsfile1\nx-emc-uid:Thu, 15 Apr 2010 12:53:43 GMT\nx-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-
-   const char *teststring="x-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    char *key = sign((char*)teststring, (char*)testkey);
-    printf("%s<><>\n%s\n",teststring, key);
-}
-
-
-
-
-
-int more(){
+int api_testing(){
 
     const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
     const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
@@ -91,7 +75,7 @@ int more(){
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    char *testdir = "/capi_dior5";
+    char *testdir = "/capi_5th";
 
     //*** Create
     result_init(&result);
@@ -104,7 +88,7 @@ int more(){
     list_ns(c, testdir,&result);    
     printf("datum%d: %s\n", result.body_size,result.response_body);
     printf("code: %d\n", result.return_code);
-
+    printf("headers : %s\n", result.headers);
     result_deinit(&result);
 
     //*** Delete
@@ -151,13 +135,44 @@ int more(){
     list_ns(c, testdir, &result);    
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
+
+    //get_system_meta(&result);// vs
+    //result.system_meta
 }
+
+void set_meta_data() {
+    const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
+    const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
+    const char *endpoint = "accesspoint.emccis.com";
+
+    credentials *c = init_ws(user_id, key, endpoint);
+    ws_result result;
+    char *testdir = "/capi_5th";
+
+    //*** Create
+    result_init(&result);
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    printf("code: %d\n", result.return_code);
+    result_deinit(&result);
+    
+    //** update_meta
+    user_meta meta,meta1;
+    bzero(&meta, sizeof(user_meta));
+    strcpy(meta.key, "meta_test");
+    strcpy(meta.value, "meta_pass");
+    meta.listable=true;
+    strcpy(meta1.key, "1_test");
+    strcpy(meta1.value, "1_pass");
+    result_init(&result);
+    meta.next=&meta1;
+    user_meta_ns(c, testdir, NULL, &meta, &result);
+}
+
 
 int main() { 
     
     //testbuildhashstring();
     //testhmac();
-    //testjava();
-        more();
-    //testjshashstring();
+    api_testing();
+    set_meta_data();
 }
