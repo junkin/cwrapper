@@ -26,8 +26,6 @@ size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 	    }
 	}
     }
-    printf("0 returning.. with to be copied to 0x%02x\n",stream, ptr);
-    printf("%s",0x0);
     return 0;
 }
 

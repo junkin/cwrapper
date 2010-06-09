@@ -86,7 +86,7 @@ int api_testing(){
     //*** LIST
     result_init(&result);
     list_ns(c, testdir,&result);    
-    printf("datum%d: %s\n", result.body_size,result.response_body);
+    printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
     printf("code: %d\n", result.return_code);
     printf("headers : %s\n", result.headers);
     result_deinit(&result);
@@ -121,7 +121,7 @@ int api_testing(){
     //*** LIST
     result_init(&result);
     list_ns(c, testdir,&result);    
-    printf("datum%d: %s\n", result.body_size,result.response_body);
+    printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
     printf("code: %d\n", result.return_code);
 
     //*** Delete
