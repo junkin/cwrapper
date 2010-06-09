@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "stdio.h"
-#include "init.h"
+#include "atmos_rest.h"
 #include "util.h"
 
 
@@ -158,6 +158,7 @@ void set_meta_data() {
     //** update_meta
     user_meta meta,meta1;
     bzero(&meta, sizeof(user_meta));
+    bzero(&meta1, sizeof(user_meta));
     strcpy(meta.key, "meta_test");
     strcpy(meta.value, "meta_pass");
     meta.listable=true;

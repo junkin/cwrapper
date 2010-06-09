@@ -12,9 +12,22 @@ size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 
     if(stream) {
 	postdata *ud = (postdata*)stream;
-	memcpy(ptr, ud->data, ud->body_size);
-	return ud->body_size;
+	
+	if(ud->bytes_remaining) {
+	    if(ud->body_size > size*nmemb) {
+		memcpy(ptr, ud->data+ud->bytes_written, size*nmemb);
+		ud->bytes_written+=size+nmemb;
+		ud->bytes_remaining = ud->body_size-size*nmemb;
+		return size*nmemb;
+	    } else {
+		memcpy(ptr, ud->data+ud->bytes_written, ud->bytes_remaining);
+		ud->bytes_remaining=0;
+		return size*nmemb;;
+	    }
+	}
     }
+    printf("0 returning.. with to be copied to 0x%02x\n",stream, ptr);
+    printf("%s",0x0);
     return 0;
 }
 
@@ -25,14 +38,14 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
     int data_offset = ws->body_size;
     int mem_required = size*nmemb;
     
-    if(ws->body_size== 0) {
-	ws->body_size+=mem_required;
-	ws->response_body = malloc(ws->body_size);
+    ws->body_size+= mem_required;
+    void * new_response = realloc(ws->response_body, ws->body_size);
+    if(new_response) {
+	ws->response_body = new_response;
     } else {
-	ws->body_size+= mem_required;
-	ws->response_body = realloc(ws->response_body, ws->body_size);
+	printf("alloc error... ");
     }
-
+    
     memcpy(ws->response_body+data_offset,ptr, mem_required);
     return size*nmemb;
 }
@@ -43,12 +56,13 @@ size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
     int data_offset = ws->header_size;
     int mem_required = size*nmemb;
 
-    if(ws->header_size== 0) {
-	ws->header_size+=mem_required;
-	ws->headers = malloc(ws->header_size);
+    ws->header_size+= mem_required;
+    void *new_response = realloc(ws->headers, ws->header_size);
+
+    if(new_response) {
+	ws->headers= new_response;
     } else {
-	ws->header_size+= mem_required;
-	ws->headers = realloc(ws->headers, ws->header_size);
+	printf("alloc error... ");
     }
     memcpy(ws->headers+data_offset,ptr, mem_required);
     return size*nmemb;
@@ -71,6 +85,10 @@ void result_deinit(ws_result* result) {
 }
 const char *http_request_ns(credentials *c, http_method method, char *uri,char *content_type, char **headers, int header_count, postdata * data, ws_result* ws_result) {
 
+    if(data){
+	data->bytes_written=0;
+	data->bytes_remaining=data->body_size;
+    }
     char *ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri));
     sprintf(ns_uri,"%s%s",namespace_uri, uri);
     http_request(c, method, ns_uri, content_type, headers, header_count, data, ws_result);    
