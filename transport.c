@@ -90,7 +90,8 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 	data->bytes_written=0;
 	data->bytes_remaining=data->body_size;
     }
-    char *ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri));
+    char *ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri)+1);
+    
     sprintf(ns_uri,"%s%s",namespace_uri, uri);
     http_request(c, method, ns_uri, content_type, headers, header_count, data, ws_result);    
     free((char*)ns_uri);

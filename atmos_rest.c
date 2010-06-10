@@ -75,7 +75,10 @@ void get_date(char *formated_time)
     //strftime adds a leading 0 to the day...
     time_t t = time(NULL);
     struct tm *a = gmtime(&t);
+
     int position =strftime(formated_time, 256, "%a, %d %b %Y %H:%M:%S GMT", a);
+
+    
 }
 
 int build_hash_string (char *hash_string, http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count) 

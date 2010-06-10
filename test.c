@@ -83,12 +83,22 @@ int api_testing(){
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
 
+
     //*** LIST
     result_init(&result);
     list_ns(c, testdir,&result);    
-    printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
+    //result body size is not null terminated.
+    char *body = malloc(result.body_size+1);
+    memcpy(body, result.response_body, result.body_size);
+    body[result.body_size] = '\0';
+    printf("datum%d:%s\n", result.body_size,body);
     printf("code: %d\n", result.return_code);
-    printf("headers : %s\n", result.headers);
+    free(body);
+
+    char *hdrs = malloc(result.header_size+1);
+    memcpy(hdrs, result.headers, result.header_size);
+    hdrs[result.header_size] = '\0';
+    printf("headers : %s\n", hdrs);
     result_deinit(&result);
 
     //*** Delete
@@ -118,10 +128,17 @@ int api_testing(){
     update_ns(c, testdir,NULL, NULL, &d, NULL,&result);    
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
+
     //*** LIST
     result_init(&result);
     list_ns(c, testdir,&result);    
-    printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
+    
+    char *body2 = malloc(result.body_size+1);
+    memcpy(body2, result.response_body, result.body_size);
+    body2[result.body_size] = '\0';
+    printf("datum%d:%s\n", result.body_size,body2);
+    free(body2);
+    //printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
 
@@ -167,10 +184,12 @@ void set_meta_data() {
     meta.listable=true;
     strcpy(meta1.key, "1_test");
     strcpy(meta1.value, "1_pass");
+
     result_init(&result);
     meta.next=&meta1;
     user_meta_ns(c, testdir, NULL, &meta, &result);
-
+    result_deinit(&result);
+    
     free(c);
 }
 
@@ -180,5 +199,5 @@ int main() {
     //testbuildhashstring();
     //testhmac();
     api_testing();
-    set_meta_data();
+    //    set_meta_data();
 }

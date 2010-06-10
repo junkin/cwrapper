@@ -20,6 +20,9 @@ char *base64decode(char *base64encoded, int length)
     bmem = BIO_push(b64, bmem);
     BIO_read(bmem, buffer, length);
     BIO_free_all(bmem);
+
+    b64= NULL;
+    
     return buffer;
 }
 
@@ -40,7 +43,7 @@ char *base64encode(char *normal, int length)
     buff[bptr->length-1] = 0;
 
     BIO_free_all(b64);
-
+    b64= NULL;
     return buff;
 }
 
