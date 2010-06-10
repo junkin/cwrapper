@@ -123,6 +123,7 @@ int api_testing(){
     list_ns(c, testdir,&result);    
     printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
     printf("code: %d\n", result.return_code);
+    result_deinit(&result);
 
     //*** Delete
     result_init(&result);
@@ -138,6 +139,8 @@ int api_testing(){
 
     //get_system_meta(&result);// vs
     //result.system_meta
+    
+    free(c);
 }
 
 void set_meta_data() {
@@ -167,6 +170,8 @@ void set_meta_data() {
     result_init(&result);
     meta.next=&meta1;
     user_meta_ns(c, testdir, NULL, &meta, &result);
+
+    free(c);
 }
 
 

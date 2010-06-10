@@ -79,8 +79,10 @@ void result_init(ws_result *result) {
 }
 
 void result_deinit(ws_result* result) {
+
     free(result->response_body);
     free(result->headers);
+
 }
 const char *http_request_ns(credentials *c, http_method method, char *uri,char *content_type, char **headers, int header_count, postdata * data, ws_result* ws_result) {
 
