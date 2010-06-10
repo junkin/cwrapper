@@ -63,6 +63,7 @@ size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 	printf("alloc error... ");
     }
     memcpy(ws->headers+data_offset,ptr, mem_required);
+    
     return size*nmemb;
 
 }
@@ -91,6 +92,7 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
     sprintf(ns_uri,"%s%s",namespace_uri, uri);
     http_request(c, method, ns_uri, content_type, headers, header_count, data, ws_result);    
     free((char*)ns_uri);
+
 }
 
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
@@ -121,6 +123,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     char *endpoint_url;
     int endpoint_size = strlen(c->accesspoint)+strlen(uri) +1;
     endpoint_url = (char*)malloc(endpoint_size);
+    
     snprintf(endpoint_url, endpoint_size, "%s%s", c->accesspoint, uri);
 
     char errorbuffer[1024*1024];
@@ -170,12 +173,15 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	char signature[1024];
 	char content_type_header[1024];
 
-
+	
 	int i;
 	for(i=0;i<header_count; i++) {
 	    chunk = curl_slist_append(chunk, headers[i]);	
 	}
-	snprintf(signature,1024,"X-Emc-Signature:%s",(char*)sign(hash_string,c->secret));
+	
+	char *signed_hash = (char*)sign(hash_string,c->secret);
+	snprintf(signature,1024,"X-Emc-Signature:%s", signed_hash);
+	free(signed_hash);
 	snprintf(content_type_header, 1024,"content-type:%s", content_type); 
 	curl_slist_append(chunk,"Expect:");
 	curl_slist_append(chunk,"Transfer-Encoding:");
@@ -195,6 +201,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	int http_response_code = 0;
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &ws_result->return_code);
 	curl_easy_cleanup(curl);
+	curl_slist_free_all(chunk);
     }
     free(endpoint_url);
 }

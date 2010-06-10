@@ -53,6 +53,7 @@ const EVP_MD *evp_md = EVP_sha1();
     unsigned char md[EVP_MAX_MD_SIZE];
     char *newkey=base64decode((char*)key,key_len);
     HMAC(evp_md, newkey, key_len, hash_string, strlen((const char*)hash_string), md, &md_len);
+    free(newkey);
     return base64encode((char*)md, md_len);
 
 }

@@ -133,6 +133,7 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
 char *sign (char *hash_string, const char *key)
 {
     //printf("string to sign :\n%s\n", hash_string);
+    
     return HMACSHA1((const unsigned char*)hash_string,(void*)key,strlen(key));
 }
 
