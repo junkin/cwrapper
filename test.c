@@ -94,11 +94,14 @@ int api_testing(){
     printf("datum%d:%s\n", result.body_size,body);
     printf("code: %d\n", result.return_code);
     free(body);
-
-    char *hdrs = malloc(result.header_size+1);
-    memcpy(hdrs, result.headers, result.header_size);
-    hdrs[result.header_size] = '\0';
-    printf("headers : %s\n", hdrs);
+    int hc = 0;
+    printf("heads %d\n", result.header_count);
+    for(; hc < result.header_count; hc++) {
+	printf("%s\n",result.headers[hc]);
+    }
+    system_meta smeta;
+    get_system_meta(&result, &smeta);
+    
     result_deinit(&result);
 
     //*** Delete
@@ -121,10 +124,15 @@ int api_testing(){
 
     //*** UPDATE
     result_init(&result);
-    char data[] = "This is testing data for update:";
+    //char data[] = "This is testing data for update:";
+    int bd_size = 1024*64+2;// force boundary condistions in readfunction
+    char big_data[bd_size];
+    char *data = big_data;
+    bzero(big_data, bd_size);
+    
     postdata d;
     d.data=data;
-    d.body_size = strlen(data);
+    d.body_size = bd_size;
     update_ns(c, testdir,NULL, NULL, &d, NULL,&result);    
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
@@ -196,8 +204,19 @@ void set_meta_data() {
 
 int main() { 
     
+    int count =0;
+    int *ct_ptr = &count;
+    
+    ws_result rs;
+    result_init(&rs);
+    //bzero(array, 100*sizeof(char*));
+    split("x-emc-meta: atime=2010-06-10T02:41:56Z, mtime=2010-06-10T02:41:56Z, ctime=2010-06-10T02:41:56Z, itime=2010-06-10T01:", ':', &rs.headers, ct_ptr);
+    int i = 0; 
+    for( ; i < count; i++) {
+	printf("%d\t%s\n", i, rs.headers[i]);
+    }
     //testbuildhashstring();
     //testhmac();
     api_testing();
-    //    set_meta_data();
+        set_meta_data();
 }

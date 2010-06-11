@@ -70,6 +70,24 @@ void lowercase(char *s) {
 	s[i] = tolower(s[i]);
 }
 
+//split s1 into an array delimited on c1
+void split(char *s1, char c1, char *ar1[], int *index_ptr) {
+    int i =0;
+    int last = 0;
+    int index =0;
+    for(; i < strlen(s1); i++) {
+	if(s1[i] == c1) {
+	    int size = i-last+1;
+	    ar1[index] = malloc(size);
+	    memcpy(ar1[index], s1+last, i-last);
+	    ar1[size] = '\0';// null terminate our own strings..
+	    index++;
+	    last = i+1;
+
+	}
+    }
+    *index_ptr = index;
+}
 void get_date(char *formated_time)
 {
     //strftime adds a leading 0 to the day...
@@ -145,6 +163,8 @@ char *sign (char *hash_string, const char *key)
 
 void get_system_meta(ws_result *ws, system_meta *meta) {
     
+    //char *meta_string = ws->headers;
+    //printf("%s\n", meta_string);
     
 }
 

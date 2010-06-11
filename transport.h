@@ -31,13 +31,16 @@ typedef struct hdrval {
     void *next_header;
 } hdr;
 
+#define MAX_HEADERS 1024
 
 typedef struct ws_result {
     int return_code;
     void *response_body;
     int body_size;
-    char *headers;
-    int header_size;
+    char *headers[MAX_HEADERS];
+    int header_count
+    ;
+
 } ws_result;
 
 #define true 1

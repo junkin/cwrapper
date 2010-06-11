@@ -14,10 +14,10 @@ size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 	postdata *ud = (postdata*)stream;
 	
 	if(ud->bytes_remaining) {
-	    if(ud->body_size > size*nmemb) {
+	    if(ud->bytes_remaining > size*nmemb) {
 		memcpy(ptr, ud->data+ud->bytes_written, size*nmemb);
 		ud->bytes_written+=size+nmemb;
-		ud->bytes_remaining = ud->body_size-size*nmemb;
+		ud->bytes_remaining -=size*nmemb;
 		return size*nmemb;
 	    } else {
 		memcpy(ptr, ud->data+ud->bytes_written, ud->bytes_remaining);
@@ -51,21 +51,14 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     ws_result *ws = (ws_result*)stream;
-    int data_offset = ws->header_size;
     int mem_required = size*nmemb;
 
-    ws->header_size+= mem_required;
-    void *new_response = realloc(ws->headers, ws->header_size);
-
-    if(new_response) {
-	ws->headers= new_response;
-    } else {
-	printf("alloc error... ");
-    }
-    memcpy(ws->headers+data_offset,ptr, mem_required);
-    
+    ws->headers[ws->header_count] = malloc(mem_required+1);
+    memcpy(ws->headers[ws->header_count],ptr, mem_required);
+    ws->headers[ws->header_count][mem_required] = '\0';
+    ws->header_count++;
+    //                            
     return size*nmemb;
-
 }
 
 
@@ -73,17 +66,18 @@ void result_init(ws_result *result) {
     result->return_code = -1;
     result->response_body = NULL;
     result->body_size = 0;
-    result->headers = NULL;
-    result->header_size=0;
-
+    bzero(result->headers, sizeof(result->headers));
+    result->header_count=0;
 }
 
 void result_deinit(ws_result* result) {
-
     free(result->response_body);
-    free(result->headers);
-
+    int i = 0;
+    for(; i < result->header_count; i++) {
+	free(result->headers[i]);
+    }
 }
+
 const char *http_request_ns(credentials *c, http_method method, char *uri,char *content_type, char **headers, int header_count, postdata * data, ws_result* ws_result) {
 
     if(data){
