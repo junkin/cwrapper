@@ -1,0 +1,18 @@
+This is alpha software - if you have any questions please contact Scot Junkin at junkin_scot@emc.com. 
+
+This package is dependent on libcurl 7.20 > and open ssl > .9.8k or greater.
+
+It currently requires static linking - see the file test.c and Makefile.
+
+
+Todo:
+autoconf
+win32 support dll & build
+dyanmic libs
+ACL support
+chunked transfer's
+
+
+
+
+

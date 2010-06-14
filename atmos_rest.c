@@ -71,7 +71,7 @@ void lowercase(char *s) {
 }
 
 //split s1 into an array delimited on c1
-void split(char *s1, char c1, char *ar1[], int *index_ptr) {
+void split(char *s1, char c1, char **ar1, int *index_ptr) {
     int i =0;
     int last = 0;
     int index =0;

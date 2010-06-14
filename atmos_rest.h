@@ -78,7 +78,7 @@ void create_meta(char* key, char* val, int listable, user_meta*);
 int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count);
 char*  sign(char *hash_string, const char *key);
 void get_date(char *formated);
-void split(char *s1, char c1, char *ar1[], int *index) ;
+void split(char *s1, char c1, char **ar1, int *index) ;
 
 ///////// const30
 /////
