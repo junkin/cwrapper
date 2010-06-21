@@ -1,10 +1,53 @@
 This is alpha software - if you have any questions please contact Scot Junkin at junkin_scot@emc.com. 
 
-This package is dependent on libcurl 7.20 > and open ssl > .9.8k or greater.
+                                                                     
+This API allows C developers to easily connect to an Atmos based Storage cloud.
+It handles all of the low-level tasks such as generating and signing 
+requests, connecting to the server, and parsing server responses. 
 
-It currently requires static linking - see the file test.c and Makefile.
+Requirements
+-------------
+libcurl 7.20 or greater
+openssl-dev .9.8k or greater
 
 
+Building (linux)
+-----
+To build the API, run configure, make and make install to build and install the library.  Your build process then needs to dynamically link against the resulting library named catmos.so
+
+
+The api usage is based on creating a credentials struct and passing this to each function
+
+credentials* init_ws(const char *user_id, const char *key, const char *endpoint);
+
+
+credentials *c = init_ws(user_id, key, endpoint);
+
+Where endpoint is the hostname or IP address of the Atmos cloud access node that you're authorized to access, port is the IP port number used to connect to the server (generally
+80 for HTTP), used_id is the username to connect as, and the key is the
+shared secret key assigned to the user_id you're using.  The UID and shared secret
+are available from your Atmos Cloud administrator.  The secret key should be
+a base-64 encoded string as shown in the tennant administration console, e.g
+"jINDh7tV/jkry7o9D+YmauupIQk=".
+
+After you have created your credentials struct, you can use the methods in atmos_rest.h
+For instance, to create a new, empty object in the cloud, you would create a ws_result struct, initialize it and call create_ns.  You MUST result_deinit the ws_result struct or you will leak memory.
+
+    ws_result result;    	     
+    result_init(&result);  
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    result_deinit(&result);
+
+This creates the object using the namespace API (all namespace api calls end with _ns)
+
+Source Code
+-----------
+
+The source code is seperated at the transport, helper and atmos specific levels.
+
+    * transport currently uses libcurl, transport.h and transport.c can be replaced with any other method of making http calls provided the http_request function definition is used.
+    *util holds the signing mechanism from openssl for base64 and crypto HMAC functions. 
+    * atmos_rest has the atmos specific functions and sit atop the features provided by transport and util.
 Todo:
 autoconf
 win32 support dll & build
