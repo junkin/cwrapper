@@ -1,4 +1,3 @@
-#include "util.h"
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
@@ -6,6 +5,7 @@
 #include <openssl/buffer.h>
 #include <string.h>
 
+#include "crypto.h"
 
 
 
