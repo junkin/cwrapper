@@ -86,9 +86,6 @@ void create_meta(char* key, char* val, int listable, user_meta*);
 
 //generic ´helper functions
 
-char*  sign(char *hash_string, const char *key);
-
-void split(char *s1, char c1, char **ar1, int *index) ;
 
 ///////// const30
 /////

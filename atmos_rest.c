@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "util.h"
+#include "atmos_util.h"
 #include "atmos_rest.h"
 
 
@@ -99,7 +99,7 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta* ptr_um) {
   for(; i < ws->header_count; i++) {
 
     if(0==strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
-      int matches = sscanf(ws->headers[i], "x-emc-meta: atime=%s mtime=%s ctime=%s itime=%s type=%s uid=%s gid=%s objectid=%s objname=%s size=%d, nlink=%d, policyname=%s\n", sm->atime,sm->mtime, sm->ctime, sm->itime, sm->type, sm->uid, sm->gid, sm->objectid, sm->objectname, &sm->size, &sm->nlink, sm->policyname);
+	sscanf(ws->headers[i], "x-emc-meta: atime=%s mtime=%s ctime=%s itime=%s type=%s uid=%s gid=%s objectid=%s objname=%s size=%d, nlink=%d, policyname=%s\n", sm->atime,sm->mtime, sm->ctime, sm->itime, sm->type, sm->uid, sm->gid, sm->objectid, sm->objectname, &sm->size, &sm->nlink, sm->policyname);
       
       sm->atime[strlen(sm->atime)-1] = '\0';
       sm->mtime[strlen(sm->mtime)-1] = '\0';
@@ -156,48 +156,7 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta* ptr_um) {
 }
 
 
-void lowercase(char *s) {
-    int i = 0;
-    for( ; s[i]!=':'; i++)
-	s[i] = tolower(s[i]);
-}
 
-//split s1 into an array delimited on c1
-void split(char *s1, char c1, char **ar1, int *array_size) {
-  printf("%s\n", s1);
-    size_t i =0;
-    size_t last = 0;
-    size_t index =0;
-    for(; i <= strlen(s1); i++) {
-	if(s1[i] == c1) {
-	    int size = i-last+1;
-	    ar1[index] = malloc(size);
-	    memcpy(ar1[index], s1+last, i-last);
-	    ar1[size] = '\0';// null terminate our own strings..
-	    index++;
-	    last = i+1;
-	}
-    }
-
-    //get that last piece
-    int size = strlen(s1) - last+1;
-    ar1[index] = malloc(size);
-    bzero(ar1[index], size);
-    memcpy(ar1[index], s1+last, size-1);
-    ar1[size] = '\0';// null terminate our own strings..
-    index++;
-    last = i+1;
-    
-    *array_size = index;
-}
-
-//needs to be free*d
-char *sign (char *hash_string, const char *key)
-{
-    //printf("string to sign :\n%s\n", hash_string);
-    
-    return HMACSHA1((const unsigned char*)hash_string,(void*)key,strlen(key));
-}
 
 //x-emc-meta: atime=2010-06-09T12:46:18Z, mtime=2010-06-09T12:46:17Z, ctime=2010-06-09T12:46:17Z, itime=2010-06-09T12:46:17Z,
 // type=regular, uid=EMC007A49DEEA84C837E, gid=apache, objectid=4980cdb2a510105804bfc45d19680d04c0f8d1a1b587, objname=capi_5th, size=0, nlink=1, policyname=default

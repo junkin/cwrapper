@@ -6,7 +6,8 @@
 #include <openssl/buffer.h>
 #include <string.h>
 
-// man BIO_f_base64()
+
+
 
 char *base64decode(char *base64encoded, int length)
 {
@@ -46,10 +47,6 @@ char *base64encode(char *normal, int length)
     b64= NULL;
     return buff;
 }
-
-
-
-
 char *HMACSHA1(const unsigned char *hash_string, void *key, int key_len) {
 const EVP_MD *evp_md = EVP_sha1();    
     unsigned int md_len;
@@ -60,3 +57,14 @@ const EVP_MD *evp_md = EVP_sha1();
     return base64encode((char*)md, md_len);
 
 }
+
+//Needs to be free*d
+char *sign (char *hash_string, const char *key)
+{
+    //printf("string to sign :\n%s\n", hash_string);
+    
+    return HMACSHA1((const unsigned char*)hash_string,(void*)key,strlen(key));
+}
+
+
+
