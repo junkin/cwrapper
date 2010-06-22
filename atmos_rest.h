@@ -17,7 +17,9 @@ typedef struct requestval {
 } request;
 
 typedef struct ACLval {
-    char **permissions;
+    char user[1024];
+    char permission[1024];
+    void *next;
 } acl;
 
 #define TIMESIZE 40
@@ -55,19 +57,27 @@ typedef struct listing {
     char type[128];
 } listing;
 
+static const char *EMC_META_HDR_STR = "x-emc-meta";
+static const char *EMC_USER_HDR_STR = "x-emc-user";
+//static const char *EMC_GROUPACL_HDR_STR = "x-emc-groupacl";
+//static const char *EMC_USERACL_HDR_STR = "x-emc-useracl";
+static const char *EMC_LISTABLE_META_HDR_STR = "x-emc-listable-meta";
+
 
 //Namespace
-void create_ns(credentials *c, char * uri, char *content_type, acl *acl, user_meta *meta, void *ws_result);
-void list_ns(credentials *c, char * uri, void* ws_result);
-void update_ns(credentials *c, char * uri, char *content_type, acl *acl, postdata* data, user_meta *meta, void *ws_result);
-int delete_ns(credentials *c, char *object_id, void *ws_result);
+void create_ns(credentials *c, char * uri, char *content_type, acl *acl, user_meta *meta, ws_result *ws);
+void list_ns(credentials *c, char * uri, ws_result *ws);
+void update_ns(credentials *c, char * uri, char *content_type, acl *acl, postdata* data, user_meta *meta, ws_result *ws);
+int delete_ns(credentials *c, char *object_id, ws_result *ws);
 int set_meta_ns(credentials *c, const char *object_name, const char *key, const char *val);
 int get_meta_ns(credentials *c,const char *object_name);
 
 //namespace metadata
-int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta *meta, void * ws_result);
+int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta *meta, ws_result* ws);
 //Object
 
+//Take a ws_result and break its headers into system and user meta structs
+void parse_headers(ws_result*, system_meta*, user_meta*);
 
 //atmos specific helpers
 credentials* init_ws(const char *user_id, const char *key, const char *endpoint);
@@ -75,9 +85,9 @@ void create_meta(char* key, char* val, int listable, user_meta*);
 
 
 //generic ´helper functions
-int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count);
+
 char*  sign(char *hash_string, const char *key);
-void get_date(char *formated);
+
 void split(char *s1, char c1, char **ar1, int *index) ;
 
 ///////// const30

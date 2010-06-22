@@ -6,6 +6,12 @@
 #include "atmos_rest.h"
 #include "util.h"
 
+static const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
+static const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
+static const char *endpoint = "accesspoint.emccis.com";
+
+
+//hmac validater
 
 void testhmac() {
     printf("testhmac\n");
@@ -50,32 +56,12 @@ void testbuildhashstring() {
     printf("Finished building hash string\n");
 }
 
-void testjava() {
-
-    //const char *teststring = "GET\n\n\nSun, 3 Jan 2010 20:22:56 GMT\n/rest/objects\nx-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    //const char *teststring = "GET\n\n\nSun, 3 Jan 2010 21:10:01 GMT\n/rest/namespace/\nx-emc-uid: 0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    //const char *teststring = "GET\napplication/octet-stream\n\nSun, 3 Jan 2010 23:36:00 GMT\n/rest/namespace/\nx-emc-date:Sun, 3 Jan 2010 23:36:00 GMT\nx-emc-uid: 0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    const char *teststring = "GET\napplication/octet-stream\n\n\n/rest/namespace/\nx-emc-date:Mon, 04 Jan 2010 00:08:49 GMT\nx-emc-uid:0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    const char *testkey="YlVdJFb03nYtXZk0lk0KjQplVcI=";;
-    const char *testresult="tMLm11NnS1zsj7laFgmsa2Y08ZA=";
-    
-    //assert(strcmp(HMACSHA1((const unsigned char*)teststring, (char*)testkey, strlen(testkey)),testresult)==0);
-    //char *r = HMACSHA1((const unsigned char*)teststring, (char*)testkey, strlen(testkey));
-    printf("*** testing signing **\n");
-    char *key = sign((char*)teststring, (char*)testkey);
-    //printf("%s\n",teststring);
-    printf(":%s=%s\n", key, testresult);
-}
-
+//cycle through series of tests creating,setting meta data updateing deleting and listing objects
 int api_testing(){
-
-    const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
-    const char *endpoint = "accesspoint.emccis.com";
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    char *testdir = "/capi_5th";
+    char *testdir = "/capi_test";
 
     //*** Create
     result_init(&result);
@@ -169,17 +155,13 @@ int api_testing(){
 }
 
 void set_meta_data() {
-    const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-    const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
-    const char *endpoint = "accesspoint.emccis.com";
-
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
     char *testdir = "/capi_5th";
 
     //*** Create
     result_init(&result);
-    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    //    create_ns(c, testdir, NULL,NULL,  NULL, &result);
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
     
@@ -194,29 +176,68 @@ void set_meta_data() {
     strcpy(meta1.value, "1_pass");
 
     result_init(&result);
+
     meta.next=&meta1;
-    user_meta_ns(c, testdir, NULL, &meta, &result);
+    //    user_meta_ns(c, testdir, NULL, &meta, &result);
+    result_deinit(&result);
+
+    system_meta sm;
+    user_meta um;
+
+    result_init(&result);
+    list_ns(c, testdir, &result);    
+    parse_headers(&result, &sm, &um);    
     result_deinit(&result);
     
     free(c);
 }
 
 
-int main() { 
+//make sure headers are properly parsed.
+void header_test() {
     
     int count =0;
     int *ct_ptr = &count;
-    
     ws_result rs;
     result_init(&rs);
-    //bzero(array, 100*sizeof(char*));
-    split("x-emc-meta: atime=2010-06-10T02:41:56Z, mtime=2010-06-10T02:41:56Z, ctime=2010-06-10T02:41:56Z, itime=2010-06-10T01:", ':', &rs.headers, ct_ptr);
+    //split("x-emc-meta: atime=2010-06-10T02:41:56Z, asdf,,2,3,4,5", ',', &rs.headers, &count);
+    //split("x-emc-meta: atime=2010-06-10T02:41:56Z", ',', &rs.headers, &count);
+    split("x-emc-meta: atime=2010-06-10T02:41:56Z, mtime=2010-06-10T02:41:56Z, ctime=2010-06-10T02:41:56Z, itime=2010-06-10T01:", ',', &rs.headers, &count);
+    printf("%d\n", count);
     int i = 0; 
     for( ; i < count; i++) {
 	printf("%d\t%s\n", i, rs.headers[i]);
     }
+    result_deinit(&rs);
+}
+
+//create -> list -> delete
+void create_test() {
+
+    credentials *c = init_ws(user_id, key, endpoint);
+    ws_result result;
+    char *testdir="/capi_testing";
+    //*** Create
+    result_init(&result);
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    list_ns(c, testdir, &result);
+    system_meta sm;
+    user_meta um;
+    parse_headers(&result, &sm, &um);
+    result_deinit(&result);
+
+    //*** Delete
+    result_init(&result);
+    delete_ns(c, testdir, &result);
+    result_deinit(&result);
+
+    
+}
+int main() { 
+  //  create_test();
     //testbuildhashstring();
     //testhmac();
-    api_testing();
-        set_meta_data();
+    //api_testing();
+  //set_meta_data();
+    header_test();
 }

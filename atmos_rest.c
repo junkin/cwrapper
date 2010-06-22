@@ -8,9 +8,7 @@
 
 
 
-static const char *hdr_listable_meta="x-emc-listable-meta:";
-static const char *hdr_meta="x-emc-meta:";
-static const char *methods[] = {"POST", "GET","PUT", "DELETE","HEAD","OPTIONS"};
+
 
 credentials* init_ws(const char *user_id, const char *key, const char *endpoint) 
 {
@@ -23,46 +21,140 @@ credentials* init_ws(const char *user_id, const char *key, const char *endpoint)
 }
 
 
-void create_ns(credentials *c, char * uri, char *content_type ,acl *acl,user_meta *meta, void *ws_result)
+void create_ns(credentials *c, char * uri, char *content_type ,acl *acl,user_meta *meta, ws_result *ws)
 {
     
     http_method method = POST;
     char *headers[20];
-    http_request_ns(c, method,uri,content_type, headers,0, NULL, ws_result);
+    if(acl) {
+      //add acl headers
+    }
+    if(meta) {
+      //add meta headers on create
+    }
+    http_request_ns(c, method,uri,content_type, headers,0, NULL, ws);
     
 }
 
-void  update_ns (credentials *c, char * uri, char *content_type, acl *acllist, postdata *data,user_meta *metadata, void *ws_result) 
+void  update_ns (credentials *c, char * uri, char *content_type, acl *acl, postdata *data,user_meta *meta, ws_result *ws) 
 {
     char *headers[20];  
     http_method method = PUT;    
+    if(acl) {
+      //add acl headers
+    }
+    if(meta) {
+      //add meta headers on create
+    }
     
-    http_request_ns(c, method, uri, content_type,headers, 0, (void*)data, ws_result);
+    http_request_ns(c, method, uri, content_type,headers, 0, (void*)data, ws);
 
 }
 
-void list_ns(credentials *c,char * uri, void* ws_result) 
+void list_ns(credentials *c,char * uri, ws_result *ws) 
 {
     http_method method =GET;
     char *headers[20];    
     
-    http_request_ns (c, method, uri, NULL, headers, 0, NULL, ws_result);
+    http_request_ns (c, method, uri, NULL, headers, 0, NULL, ws);
     
 }
 
 
-int delete_ns(credentials *c, char *uri, void *ws_result) 
+int delete_ns(credentials *c, char *uri, ws_result *ws) 
 {
     http_method method = DELETE;
     char * headers[20];
-    http_request_ns (c, method, uri,NULL, headers, 0, NULL, ws_result);
-    
+    http_request_ns (c, method, uri,NULL, headers, 0, NULL, ws);
+    return ws->return_code;
 }
 
-int cstring_cmp(const void *a, const void *b)
-{
-    return strcmp(* (char * const *) a, * (char * const *) b);
+/*
+HTTP/1.1 200 OK
+
+Date: Mon, 21 Jun 2010 14:39:44 GMT
+
+Server: Apache
+
+x-emc-policy: default
+
+Content-Length: 0
+
+x-emc-groupacl: other=NONE
+
+x-emc-useracl: EMC007A49DEEA84C837E=FULL_CONTROL
+
+x-emc-meta: atime=2010-06-21T14:37:37Z, mtime=2010-06-21T14:37:37Z, ctime=2010-06-21T14:37:37Z, itime=2010-06-21T14:37:37Z, type=regular, uid=EMC007A49DEEA84C837E, gid=apache, objectid=4980cdb2a310105404bc7d8ca4d51e04c1f7931a51ae, objname=capi_5th, size=0, nlink=1, policyname=default
+
+X-Cnection: close
+
+Content-Type: application/octet-stream
+
+ */
+
+
+
+void parse_headers(ws_result* ws, system_meta* sm, user_meta* ptr_um) {
+  int i = 0;
+  for(; i < ws->header_count; i++) {
+
+    if(0==strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
+      int matches = sscanf(ws->headers[i], "x-emc-meta: atime=%s mtime=%s ctime=%s itime=%s type=%s uid=%s gid=%s objectid=%s objname=%s size=%d, nlink=%d, policyname=%s\n", sm->atime,sm->mtime, sm->ctime, sm->itime, sm->type, sm->uid, sm->gid, sm->objectid, sm->objectname, &sm->size, &sm->nlink, sm->policyname);
+      
+      sm->atime[strlen(sm->atime)-1] = '\0';
+      sm->mtime[strlen(sm->mtime)-1] = '\0';
+      sm->ctime[strlen(sm->ctime)-1] = '\0';
+      sm->itime[strlen(sm->itime)-1] = '\0';      
+      sm->type[strlen(sm->type)-1] = '\0';
+      sm->uid[strlen(sm->uid)-1] = '\0';
+      sm->gid[strlen(sm->gid)-1] = '\0';
+      sm->objectid[strlen(sm->objectid)-1] = '\0';
+      sm->objectname[strlen(sm->objectname)-1] = '\0';
+
+    } else if(0==strncmp(ws->headers[i], EMC_USER_HDR_STR, strlen(EMC_USER_HDR_STR))) {
+      printf("USERACL: %s\n", ws->headers[i]);
+      
+    } else if(0 == strncmp(ws->headers[i], EMC_LISTABLE_META_HDR_STR, strlen(EMC_LISTABLE_META_HDR_STR))) {
+      //listable x-emc-listable-meta: meta_test=meta_pass
+      char *pairs[1024];
+      int count = 0;
+      split(ws->headers[i]+strlen(EMC_LISTABLE_META_HDR_STR), ',', pairs, &count);
+      int index = 0;
+      for(;index < count; index++) {
+	ptr_um = malloc(sizeof(user_meta));
+	bzero(ptr_um, sizeof(user_meta));
+
+	ptr_um->listable = true;	
+	char *key_value[2];
+	int kv_count = 0;
+	split(pairs[index], '=', key_value, &kv_count);
+	if(kv_count ==2) {
+	  strcpy(ptr_um->key,key_value[0]);
+	  strcpy(ptr_um->value,key_value[1]);
+	} else {
+	  printf("meta data parse error!\n");
+	}
+	int k;
+	for(k=0; k<kv_count; k++) {
+	  free(key_value[k]);
+	}
+	ptr_um = ptr_um->next;
+      }
+
+      int free_pairs = 0;
+      for(free_pairs=0; free_pairs<count; free_pairs++) {
+	free(pairs[count]);
+      }
+
+      
+	
+    } else if(0 == strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
+      ptr_um->listable=false;
+      
+    }
+  }
 }
+
 
 void lowercase(char *s) {
     int i = 0;
@@ -71,11 +163,12 @@ void lowercase(char *s) {
 }
 
 //split s1 into an array delimited on c1
-void split(char *s1, char c1, char **ar1, int *index_ptr) {
-    int i =0;
-    int last = 0;
-    int index =0;
-    for(; i < strlen(s1); i++) {
+void split(char *s1, char c1, char **ar1, int *array_size) {
+  printf("%s\n", s1);
+    size_t i =0;
+    size_t last = 0;
+    size_t index =0;
+    for(; i <= strlen(s1); i++) {
 	if(s1[i] == c1) {
 	    int size = i-last+1;
 	    ar1[index] = malloc(size);
@@ -83,73 +176,21 @@ void split(char *s1, char c1, char **ar1, int *index_ptr) {
 	    ar1[size] = '\0';// null terminate our own strings..
 	    index++;
 	    last = i+1;
-
 	}
     }
-    *index_ptr = index;
-}
-void get_date(char *formated_time)
-{
-    //strftime adds a leading 0 to the day...
-    time_t t = time(NULL);
-    struct tm *a = gmtime(&t);
 
-    int position =strftime(formated_time, 256, "%a, %d %b %Y %H:%M:%S GMT", a);
-
+    //get that last piece
+    int size = strlen(s1) - last+1;
+    ar1[index] = malloc(size);
+    bzero(ar1[index], size);
+    memcpy(ar1[index], s1+last, size-1);
+    ar1[size] = '\0';// null terminate our own strings..
+    index++;
+    last = i+1;
     
+    *array_size = index;
 }
 
-int build_hash_string (char *hash_string, http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count) 
-{
-    char *req_ptr=hash_string;
-
-    //all lowercase BEFORE entering sort..
-    
-    int is;
-    for(is = 0; is < header_count; is++) {
-	lowercase(emc_sorted_headers[is]);
-    }
-	
-    qsort(emc_sorted_headers, header_count, sizeof(char*),cstring_cmp);
-    int ir = 0;
-    req_ptr+=sprintf(req_ptr,"%s\n",methods[method]);
-
-    if(content_type!=NULL) {
-	req_ptr+=sprintf(req_ptr,"%s\n",content_type);
-    } else{
-	req_ptr+=sprintf(req_ptr,"\n");
-    }
-
-    if(range!=NULL) {
-	req_ptr+=sprintf(req_ptr,"%s\n",range);
-    } else{
-	req_ptr+=sprintf(req_ptr,"\n");
-    }
-    
-    if(date!=NULL) {
-	req_ptr+=sprintf(req_ptr,"%s\n",date);
-    } else{
-	req_ptr+=sprintf(req_ptr,"\n");
-    }
-
-    req_ptr+=sprintf(req_ptr,"%s\n",uri);
-    int i;
-    for(i = 0; i < header_count; i++) {
-	if (i < header_count-1)
-	    {
-		req_ptr+=sprintf(req_ptr,"%s\n", emc_sorted_headers[i]);		
-	    } 
-	else 
-	    {
-		req_ptr+=sprintf(req_ptr,"%s", emc_sorted_headers[i]);
-	    }
-    }
-    int length = (int)(req_ptr-hash_string);
-    //printf("length %d", length);
-    //printf("%s\n", hash_string);
-    return length;
-
-}
 //needs to be free*d
 char *sign (char *hash_string, const char *key)
 {
@@ -162,7 +203,9 @@ char *sign (char *hash_string, const char *key)
 // type=regular, uid=EMC007A49DEEA84C837E, gid=apache, objectid=4980cdb2a510105804bfc45d19680d04c0f8d1a1b587, objname=capi_5th, size=0, nlink=1, policyname=default
 
 void get_system_meta(ws_result *ws, system_meta *meta) {
-    
+  if(ws && meta) {
+    ;
+  }
     //char *meta_string = ws->headers;
     //printf("%s\n", meta_string);
     
@@ -173,7 +216,7 @@ void get_system_meta(ws_result *ws, system_meta *meta) {
 //metaData operations
 //FIXME:bound counts and sizes
 
-int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta *meta, void * ws_result) 
+int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta *meta, ws_result * ws) 
 {
     if(meta) {
 	static const char* user_meta_uri = "?metadata/user";
@@ -188,8 +231,6 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 	char emc_listable[8192]; //FIXME is 8k the header limit?
 	int emc_listable_loc = 0;
 	
-	
-
 	user_meta * index = meta;
 	int meta_count, meta_listable_count = 0;
 	for( ; index !=NULL;  index= index->next) {
@@ -215,13 +256,13 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 	    }
 	}
 	
-	http_request_ns (c, method, meta_uri, NULL, headers, header_count, NULL, ws_result);
+	http_request_ns (c, method, meta_uri, content_type, headers, header_count, NULL, ws);
 	free(meta_uri);
     }
-    
+    return ws->return_code;
 }
-int object_get_listable_meta(const char *object_name) 
-{
-
-}
+//int object_get_listable_meta(const char *object_name) 
+//{
+  
+//}
 

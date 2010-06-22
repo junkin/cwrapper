@@ -19,9 +19,9 @@ typedef enum http_methodval   {
 
 typedef struct PD {
     void *data;
-    int body_size;
-    int bytes_remaining;
-    int bytes_written;
+    size_t body_size;
+    size_t bytes_remaining;
+    size_t bytes_written;
 
 } postdata;
 
@@ -38,9 +38,7 @@ typedef struct ws_result {
     void *response_body;
     int body_size;
     char *headers[MAX_HEADERS];
-    int header_count
-    ;
-
+    int header_count;
 } ws_result;
 
 #define true 1
@@ -48,9 +46,11 @@ typedef struct ws_result {
 
 #define HTTP_HDR_SIZE 4096
 const char *http_request(credentials *c,http_method method, char *uri,char * content_type, char **headers, int header_count, postdata* a, ws_result* ws_result) ;
+void get_date(char *formated);
 const char *http_request_ns(credentials *c,http_method method, char *uri, char *content_type, char **headers, int header_count, postdata* a, ws_result *ws_result) ;
 void ws_init(ws_result*);
 void ws_deinit(ws_result*);
 
+int build_hash_string (char *hash_string, const http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count);
 #endif
 

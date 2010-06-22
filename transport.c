@@ -6,6 +6,7 @@
 
 static const char *namespace_uri = "/rest/namespace";
 static const char *object_uri = "/rest/objects";
+static const char *methods[] = {"POST", "GET","PUT", "DELETE","HEAD","OPTIONS"};
 
 size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -61,6 +62,15 @@ size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
     return size*nmemb;
 }
 
+void get_date(char *formated_time)
+{
+    //strftime adds a leading 0 to the day...
+    time_t t = time(NULL);
+    struct tm *a = gmtime(&t);
+
+    strftime(formated_time, 256, "%a, %d %b %Y %H:%M:%S GMT", a);
+    
+}
 
 void result_init(ws_result *result) {
     result->return_code = -1;
@@ -162,6 +172,10 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	case HEAD:
 
 	    break;
+	case GET:
+	  break;
+	case OPTIONS:
+	  break;
 	}
 	
 	char hash_string[1024];
@@ -201,4 +215,62 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	curl_slist_free_all(chunk);
     }
     free(endpoint_url);
+}
+
+
+int cstring_cmp(const void *a, const void *b)
+{
+    return strcmp(* (char * const *) a, * (char * const *) b);
+}
+
+int build_hash_string (char *hash_string, http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count) 
+{
+    char *req_ptr=hash_string;
+
+    //all lowercase BEFORE entering sort..
+    
+    int is;
+    for(is = 0; is < header_count; is++) {
+	lowercase(emc_sorted_headers[is]);
+    }
+	
+    qsort(emc_sorted_headers, header_count, sizeof(char*),cstring_cmp);
+
+    req_ptr+=sprintf(req_ptr,"%s\n",methods[method]);
+
+    if(content_type!=NULL) {
+	req_ptr+=sprintf(req_ptr,"%s\n",content_type);
+    } else{
+	req_ptr+=sprintf(req_ptr,"\n");
+    }
+
+    if(range!=NULL) {
+	req_ptr+=sprintf(req_ptr,"%s\n",range);
+    } else{
+	req_ptr+=sprintf(req_ptr,"\n");
+    }
+    
+    if(date!=NULL) {
+	req_ptr+=sprintf(req_ptr,"%s\n",date);
+    } else{
+	req_ptr+=sprintf(req_ptr,"\n");
+    }
+
+    req_ptr+=sprintf(req_ptr,"%s\n",uri);
+    int i;
+    for(i = 0; i < header_count; i++) {
+	if (i < header_count-1)
+	    {
+		req_ptr+=sprintf(req_ptr,"%s\n", emc_sorted_headers[i]);		
+	    } 
+	else 
+	    {
+		req_ptr+=sprintf(req_ptr,"%s", emc_sorted_headers[i]);
+	    }
+    }
+    int length = (int)(req_ptr-hash_string);
+    //printf("length %d", length);
+    //printf("%s\n", hash_string);
+    return length;
+
 }
