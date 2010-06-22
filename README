@@ -13,8 +13,7 @@ openssl-dev .9.8k or greater
 
 Building (linux)
 -----
-To build the API, run configure, make and make install to build and install the library.  Your build process then needs to dynamically link against the resulting library named catmos.so
-
+To build the API, run make and make install to build and install the library.  Your build process then needs to dynamically link against the resulting library named libatmos.so
 
 The api usage is based on creating a credentials struct and passing this to each function
 

@@ -7,19 +7,18 @@ FLAGS = -Wall -Wextra -fPIC -g -c
 TESTSRC = test.c
 TESTLIBS = -latmos
 VERSION = 1
-LIBNAME = libatmos.so.$(VERSION)
+LIBNAME = libatmos.so
 SOFLAGS = -shared -Wl,-soname,$(LIBNAME) -o $(LIBNAME)
 
 all: objects lib test
-	
+
 objects: $(SRC)
 	gcc $(FLAGS) $(SRC)
 lib: $(OBJ)
 	gcc $(SOFLAGS) $(OBJ) 
 test: $(TESTSRC)
-	gcc $(TESTSRC) $(TESTLIBS) $(LIBS) $(LIBDIR) -Wl,-rpath,/home/sjunkin/cwrapper/
+	gcc -g -o atmostest $(TESTSRC) $(TESTLIBS) $(LIBS) $(LIBDIR)
 
 clean:
 	rm *.o
 	rm *.so
-	rm *.so.1

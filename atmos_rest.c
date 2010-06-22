@@ -135,14 +135,14 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta* ptr_um) {
 	  printf("meta data parse error!\n");
 	}
 	int k;
-	for(k=0; k<kv_count; k++) {
+	for(k=0; k<=kv_count; k++) {
 	  free(key_value[k]);
 	}
 	ptr_um = ptr_um->next;
       }
 
       int free_pairs = 0;
-      for(free_pairs=0; free_pairs<count; free_pairs++) {
+      for(free_pairs=0; free_pairs<=count; free_pairs++) {
 	free(pairs[count]);
       }
 

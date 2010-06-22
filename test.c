@@ -155,6 +155,7 @@ int api_testing(){
 }
 
 void set_meta_data() {
+
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
     char *testdir = "/capi_5th";
@@ -181,14 +182,21 @@ void set_meta_data() {
     //    user_meta_ns(c, testdir, NULL, &meta, &result);
     result_deinit(&result);
 
-    system_meta sm;
-    user_meta um;
+    system_meta *sm;
+    user_meta *um;
 
     result_init(&result);
     list_ns(c, testdir, &result);    
-    parse_headers(&result, &sm, &um);    
+    parse_headers(&result, sm, um);    
     result_deinit(&result);
     
+    while(um != NULL) {
+      user_meta *t = um->next;
+      free(um);
+      um=t;
+    }
+      
+      
     free(c);
 }
 
@@ -198,17 +206,16 @@ void header_test() {
     
     int count =0;
     int *ct_ptr = &count;
-    ws_result rs;
-    result_init(&rs);
     //split("x-emc-meta: atime=2010-06-10T02:41:56Z, asdf,,2,3,4,5", ',', &rs.headers, &count);
     //split("x-emc-meta: atime=2010-06-10T02:41:56Z", ',', &rs.headers, &count);
-    split("x-emc-meta: atime=2010-06-10T02:41:56Z, mtime=2010-06-10T02:41:56Z, ctime=2010-06-10T02:41:56Z, itime=2010-06-10T01:", ',', &rs.headers, &count);
+    char *pairs[1024];
+    split("x-emc-meta: atime=2010-06-10T02:41:56Z, mtime=2010-06-10T02:41:56Z, ctime=2010-06-10T02:41:56Z, itime=2010-06-10T01:", ',', pairs, &count);
     printf("%d\n", count);
     int i = 0; 
     for( ; i < count; i++) {
-	printf("%d\t%s\n", i, rs.headers[i]);
+	printf("%d\t%s\n", i, pairs[i]);
     }
-    result_deinit(&rs);
+
 }
 
 //create -> list -> delete
@@ -234,10 +241,10 @@ void create_test() {
     
 }
 int main() { 
-  //  create_test();
-    //testbuildhashstring();
-    //testhmac();
-    //api_testing();
-  //set_meta_data();
+  //    create_test();
+  //    testbuildhashstring();
+  //    testhmac();
+  //    api_testing();
+    set_meta_data();
     header_test();
 }
