@@ -196,7 +196,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 
 	if(data) {
 	    char content_length_header[1024];
-	    snprintf(content_length_header,1024, "content-length: %ld", data->body_size);
+	    snprintf(content_length_header,1024, "content-length: %zu", data->body_size);
 	    curl_slist_append(chunk,content_length_header);
 		
 	}

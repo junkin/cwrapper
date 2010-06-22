@@ -4,7 +4,7 @@
 
 #include "stdio.h"
 #include "atmos_rest.h"
-#include "util.h"
+#include "crypto.h"
 
 static const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
 static const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
