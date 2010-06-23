@@ -54,7 +54,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     ws_result *ws = (ws_result*)stream;
-    int mem_required = size*nmemb;
+    int mem_required = size*nmemb-2;
 
     ws->headers[ws->header_count] = malloc(mem_required+1);
     memcpy(ws->headers[ws->header_count],ptr, mem_required);
