@@ -214,24 +214,6 @@ void set_meta_data() {
 }
 
 
-//make sure headers are properly parsed.
-void header_test() {
-    
-    int count =0;
-    int *ct_ptr = &count;
-    //split("x-emc-meta: atime=2010-06-10T02:41:56Z, asdf,,2,3,4,5", ',', &rs.headers, &count);
-    //split("x-emc-meta: atime=2010-06-10T02:41:56Z", ',', &rs.headers, &count);
-    char *pairs[1024];
-    split("x-emc-meta: atime=2010-06-10T02:41:56Z, mtime=2010-06-10T02:41:56Z, ctime=2010-06-10T02:41:56Z, itime=2010-06-10T01:", ',', pairs, &count);
-    printf("%d\n", count);
-    int i = 0; 
-    for( ; i < count; i++) {
-	printf("%d\t%s\n", i, pairs[i]);
-	free(pairs[i]);
-    }
-
-}
-
 //create -> list -> delete
 void create_test() {
 
@@ -256,10 +238,10 @@ void create_test() {
     free(c);
 }
 int main() { 
-  //    create_test();
-  //testbuildhashstring();
-  //testhmac();
-  //api_testing();
+  create_test();
+  testbuildhashstring();
+  testhmac();
+  api_testing();
   set_meta_data();
-  //header_test();
+
 }

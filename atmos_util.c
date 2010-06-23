@@ -82,30 +82,3 @@ void lowercase(char *s) {
 	s[i] = tolower(s[i]);
 }
 
-//split s1 into an array delimited on c1
-void split(char *s1, char c1, char **ar1, int *array_size) {
-    size_t i =0;
-    size_t last = 0;
-    size_t index =0;
-    for(; i <= strlen(s1); i++) {
-	if(s1[i] == c1) {
-	    int size = i-last+1;
-	    ar1[index] = malloc(size);
-	    memcpy(ar1[index], s1+last, i-last);
-	    ar1[size] = '\0';// null terminate our own strings..
-	    index++;
-	    last = i+1;
-	}
-    }
-
-    //get that last piece
-    int size = strlen(s1) - last+1;
-    ar1[index] = malloc(size);
-    bzero(ar1[index], size);
-    memcpy(ar1[index], s1+last, size-1);
-    ar1[size] = '\0';// null terminate our own strings..
-    index++;
-    last = i+1;
-    
-    *array_size = index;
-}
