@@ -87,8 +87,6 @@ int api_testing(){
     for(; hc < result.header_count; hc++) {
 	printf("%s\n",result.headers[hc]);
     }
-    system_meta smeta;
-    get_system_meta(&result, &smeta);
     
     result_deinit(&result);
 
@@ -189,14 +187,17 @@ void set_meta_data() {
     meta.next=&meta1;
     meta1.next=&meta2;
     meta2.next=&meta3;
-    user_meta_ns(c, testdir, NULL, &meta, &result);
+    //user_meta_ns(c, testdir, NULL, &meta, &result);
     result_deinit(&result);
-
+    printf("send metadata\n");
     system_meta sm ;
     user_meta *um = NULL;
 
     result_init(&result);
     list_ns(c, testdir, &result);    
+    
+    printf("fetched` metadata\n");
+    
     parse_headers(&result, &sm, &um);    
     
     result_deinit(&result);
@@ -255,10 +256,10 @@ void create_test() {
     free(c);
 }
 int main() { 
-    create_test();
-      testbuildhashstring();
-      testhmac();
-      api_testing();
-    set_meta_data();
-    header_test();
+  //    create_test();
+  //testbuildhashstring();
+  //testhmac();
+  //api_testing();
+  set_meta_data();
+  //header_test();
 }

@@ -69,31 +69,6 @@ int delete_ns(credentials *c, char *uri, ws_result *ws)
     return ws->return_code;
 }
 
-/*
-  HTTP/1.1 200 OK
-
-  Date: Mon, 21 Jun 2010 14:39:44 GMT
-
-  Server: Apache
-
-  x-emc-policy: default
-
-  Content-Length: 0
-
-  x-emc-groupacl: other=NONE
-
-  x-emc-useracl: EMC007A49DEEA84C837E=FULL_CONTROL
-
-  x-emc-meta: atime=2010-06-21T14:37:37Z, mtime=2010-06-21T14:37:37Z, ctime=2010-06-21T14:37:37Z, itime=2010-06-21T14:37:37Z, type=regular, uid=EMC007A49DEEA84C837E, gid=apache, objectid=4980cdb2a310105404bc7d8ca4d51e04c1f7931a51ae, objname=capi_5th, size=0, nlink=1, policyname=default
-
-  X-Cnection: close
-
-  Content-Type: application/octet-stream
-
-*/
-
-
-
 void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
     int i = 0;
     user_meta *ptr_um=NULL;
@@ -102,10 +77,11 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
 	    char *meta_ptr = ws->headers[i] + strlen(EMC_META_HDR_STR);
 	    char delims[] = ",";
 	    char *result = NULL;
-	    result = strtok( meta_ptr, delims);
+	    char *hdr_context;
+	    result = strtok_r( meta_ptr, delims, &hdr_context);
 	    while (result != NULL) {
 		
-		//trim leading whitespace
+	      //trim leading whitespace
 		int offset = 0;
 		for (;result[offset] == ' '; offset++) ;
 		result+=offset;
@@ -145,91 +121,67 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
 		    }
 		    bzero(ptr_um, sizeof(user_meta));
 		    ptr_um->listable = false;	
-		    char *key_value[2];
-		    int kv_count = 0;
-		    split(result, '=', key_value, &kv_count);
-		    if(kv_count ==2) {	
-			strcpy(ptr_um->key,key_value[0]);
-			strcpy(ptr_um->value,key_value[1]);
 
-		    } else {
-			printf("meta data parse error!\n");
+		    char um_delims[] = "=";
+		    char *meta_context;
+		    char *um_result = NULL;
+		    um_result = strtok_r(result, um_delims, &meta_context);
+		    int meta_index = 0;
+		    while (um_result != NULL) {
+		      if(0==meta_index) {
+			strcpy(ptr_um->key,um_result);		  
+		      } else {
+			strcpy(ptr_um->value,um_result);
+		      }
+		      meta_index++;
+		      um_result = strtok_r(NULL, um_delims, &meta_context);
 		    }
-		    int k;
-		    for(k=0; k<kv_count; k++) {
-			free(key_value[k]);
-		    }
-		    
 		}
-		result = strtok(NULL, delims);
+		result = strtok_r(NULL, delims, &hdr_context);
 	    }
 	} else if(0==strncmp(ws->headers[i], EMC_USER_HDR_STR, strlen(EMC_USER_HDR_STR))) {
 	    printf("USERACL: %s\n", ws->headers[i]);
 	    
 	} else if(0 == strncmp(ws->headers[i], EMC_LISTABLE_META_HDR_STR, strlen(EMC_LISTABLE_META_HDR_STR))) {
-	    //listable x-emc-listable-meta: meta_test=meta_pass
-	    char *pairs[1024];
-	    int count = 0;
-	    split(ws->headers[i]+strlen(EMC_LISTABLE_META_HDR_STR), ',', pairs, &count);
-	    int index = 0;
-
-
-	    for(;index < count; index++) {
-		if(ptr_um) {
-		    ptr_um->next = malloc(sizeof(user_meta));
-		    ptr_um = ptr_um->next;
-		} else {
-		    *head_ptr_um = malloc(sizeof(user_meta));
-		    ptr_um = *head_ptr_um;
-		}
-		bzero(ptr_um, sizeof(user_meta));
-
-		ptr_um->listable = true;	
-		char *key_value[2];
-
-		int kv_count = 0;
-		split(pairs[index], '=', key_value, &kv_count);
-		if(kv_count ==2) {	
-		    strcpy(ptr_um->key,key_value[0]);
-		    strcpy(ptr_um->value,key_value[1]);
-		} else {
-		    printf("meta data parse error!\n");
-		}
-		int k;
-		for(k=0; k<kv_count; k++) {
-		    free(key_value[k]);
-		}
+	  //listable x-emc-listable-meta: meta_test=meta_pass
+	  char hdr_delims[] = ",";
+	  char *hdr_result = NULL;
+	  char *hdr_context = NULL;
+	  hdr_result = strtok_r(ws->headers[i]+strlen(EMC_LISTABLE_META_HDR_STR), hdr_delims, &hdr_context);
+	  while (hdr_result != NULL) {
+	    if(ptr_um) {
+	      ptr_um->next = malloc(sizeof(user_meta));
+	      ptr_um = ptr_um->next;
+	    } else {
+	      *head_ptr_um = malloc(sizeof(user_meta));
+	      ptr_um = *head_ptr_um;
 	    }
-	    int free_pairs = 0;
-	    for(free_pairs=0; free_pairs<count; free_pairs++) {
-		free(pairs[free_pairs]);
+	    bzero(ptr_um, sizeof(user_meta));
+	    
+	    ptr_um->listable = true;	
+	    char delims[] = "=";
+	    char *result = NULL;
+	    char *inner_context;
+	    result = strtok_r(hdr_result, delims, &inner_context);
+	    int meta_index = 0;
+	    while (result != NULL) {
+	      if(0==meta_index) {
+		strcpy(ptr_um->key,result);		  
+	      } else {
+		strcpy(ptr_um->value,result);
+	      }
+	      meta_index++;
+	      result = strtok_r(NULL, delims, &inner_context);
 	    }
+	    hdr_result = strtok_r(NULL, hdr_delims, &hdr_context);
+	  }
 	} else if(0 == strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
-	    ptr_um->listable=false;
-      
+	  ptr_um->listable=false;
+	  
 	}
     }
 }
 
-
-
-
-//x-emc-meta: atime=2010-06-09T12:46:18Z, mtime=2010-06-09T12:46:17Z, ctime=2010-06-09T12:46:17Z, itime=2010-06-09T12:46:17Z,
-// type=regular, uid=EMC007A49DEEA84C837E, gid=apache, objectid=4980cdb2a510105804bfc45d19680d04c0f8d1a1b587, objname=capi_5th, size=0, nlink=1, policyname=default
-
-void get_system_meta(ws_result *ws, system_meta *meta) {
-    if(ws && meta) {
-	;
-    }
-    //char *meta_string = ws->headers;
-    //printf("%s\n", meta_string);
-    
-}
-
-
-
-//metaData operations
-//FIXME:bound counts and sizes
 
 int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta *meta, ws_result * ws) 
 {

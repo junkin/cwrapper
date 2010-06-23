@@ -84,7 +84,6 @@ void lowercase(char *s) {
 
 //split s1 into an array delimited on c1
 void split(char *s1, char c1, char **ar1, int *array_size) {
-  printf("%s\n", s1);
     size_t i =0;
     size_t last = 0;
     size_t index =0;
