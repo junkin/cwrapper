@@ -77,7 +77,7 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 //Object
 
 //Take a ws_result and break its headers into system and user meta structs
-void parse_headers(ws_result*, system_meta*, user_meta*);
+void parse_headers(ws_result*, system_meta*, user_meta**);
 
 //atmos specific helpers
 credentials* init_ws(const char *user_id, const char *key, const char *endpoint);

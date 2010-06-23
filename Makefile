@@ -17,7 +17,7 @@ objects: $(SRC)
 lib: $(OBJ)
 	gcc $(SOFLAGS) $(OBJ) 
 test: $(TESTSRC)
-	gcc -g -o atmostest $(TESTSRC) $(TESTLIBS) $(LIBS) $(LIBDIR)
+	gcc -g -o atmostest $(TESTSRC) $(SRC) $(LIBS) $(LIBDIR)
 
 clean:
 	rm *.o

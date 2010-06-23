@@ -94,8 +94,9 @@ int delete_ns(credentials *c, char *uri, ws_result *ws)
 
 
 
-void parse_headers(ws_result* ws, system_meta* sm, user_meta* ptr_um) {
+void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
     int i = 0;
+    user_meta *ptr_um=NULL;
     for(; i < ws->header_count; i++) {
 
 	if(0==strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
@@ -120,30 +121,39 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta* ptr_um) {
 	    int count = 0;
 	    split(ws->headers[i]+strlen(EMC_LISTABLE_META_HDR_STR), ',', pairs, &count);
 	    int index = 0;
+
+
 	    for(;index < count; index++) {
-		ptr_um = malloc(sizeof(user_meta));
+		if(ptr_um) {
+		    ptr_um->next = malloc(sizeof(user_meta));
+		    ptr_um = ptr_um->next;
+		} else {
+		    *head_ptr_um = malloc(sizeof(user_meta));
+		    ptr_um = *head_ptr_um;
+		}
 		bzero(ptr_um, sizeof(user_meta));
 
 		ptr_um->listable = true;	
 		char *key_value[2];
+
 		int kv_count = 0;
 		split(pairs[index], '=', key_value, &kv_count);
-		if(kv_count ==2) {
+		if(kv_count ==2) {	
 		    strcpy(ptr_um->key,key_value[0]);
 		    strcpy(ptr_um->value,key_value[1]);
 		} else {
 		    printf("meta data parse error!\n");
 		}
 		int k;
-		for(k=0; k<=kv_count; k++) {
+		for(k=0; k<kv_count; k++) {
 		    free(key_value[k]);
 		}
-		ptr_um = ptr_um->next;
+
 	    }
 
 	    int free_pairs = 0;
-	    for(free_pairs=0; free_pairs<=count; free_pairs++) {
-		free(pairs[count]);
+	    for(free_pairs=0; free_pairs<count; free_pairs++) {
+		free(pairs[free_pairs]);
 	    }
 
       

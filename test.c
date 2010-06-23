@@ -182,18 +182,18 @@ void set_meta_data() {
     //    user_meta_ns(c, testdir, NULL, &meta, &result);
     result_deinit(&result);
 
-    system_meta *sm;
-    user_meta *um;
+    system_meta sm ;
+    user_meta *um = NULL;
 
     result_init(&result);
     list_ns(c, testdir, &result);    
-    parse_headers(&result, sm, um);    
+    parse_headers(&result, &sm, &um);    
     result_deinit(&result);
     
     while(um != NULL) {
-      user_meta *t = um->next;
-      free(um);
-      um=t;
+	user_meta *t = um->next;
+	free(um);
+	um=t;
     }
       
       
@@ -214,6 +214,7 @@ void header_test() {
     int i = 0; 
     for( ; i < count; i++) {
 	printf("%d\t%s\n", i, pairs[i]);
+	free(pairs[i]);
     }
 
 }
@@ -229,7 +230,8 @@ void create_test() {
     create_ns(c, testdir, NULL,NULL,  NULL, &result);
     list_ns(c, testdir, &result);
     system_meta sm;
-    user_meta um;
+    bzero(&sm, sizeof(sm));
+    user_meta *um;
     parse_headers(&result, &sm, &um);
     result_deinit(&result);
 
