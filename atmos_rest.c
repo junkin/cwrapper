@@ -246,11 +246,14 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 	char emc_listable[8192]; //FIXME is 8k the header limit?
 	int emc_listable_loc = 0;
 	
-	user_meta * index = meta;
-	int meta_count, meta_listable_count = 0;
-	for( ; index !=NULL;  index= index->next) {
+	user_meta *index = meta;
+	int meta_count = 0;
+	int meta_listable_count = 0;
+	
+	
+	for( ; index !=NULL;  index=index->next) {
 	    if(index->listable == false) {
-		if(meta_count > 1) {
+		if(meta_count > 0) {
 		    emc_meta_loc+=sprintf(emc_meta+emc_meta_loc, ",%s=%s", index->key, index->value);
 		}
 		else {
@@ -260,7 +263,7 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 		}
 		meta_count++;
 	    } else if(index->listable == true) {
-		if(meta_count > 1) {
+		if(meta_listable_count > 0) {
 		    emc_listable_loc+=sprintf(emc_listable+emc_listable_loc, ",%s=%s", index->key, index->value);
 		}
 		else {

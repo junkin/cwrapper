@@ -167,19 +167,27 @@ void set_meta_data() {
     result_deinit(&result);
     
     //** update_meta
-    user_meta meta,meta1;
+    user_meta meta,meta1, meta2, meta3;
     bzero(&meta, sizeof(user_meta));
     bzero(&meta1, sizeof(user_meta));
+    bzero(&meta2, sizeof(user_meta));
+    bzero(&meta3, sizeof(user_meta));
     strcpy(meta.key, "meta_test");
     strcpy(meta.value, "meta_pass");
     meta.listable=true;
     strcpy(meta1.key, "1_test");
     strcpy(meta1.value, "1_pass");
-
+    strcpy(meta2.key, "2_test");
+    strcpy(meta2.value, "2_pass");
+    strcpy(meta3.key, "3_test");
+    strcpy(meta3.value, "3_pass");
+    
     result_init(&result);
 
     meta.next=&meta1;
-    //    user_meta_ns(c, testdir, NULL, &meta, &result);
+    meta1.next=&meta2;
+    meta2.next=&meta3;
+    user_meta_ns(c, testdir, NULL, &meta, &result);
     result_deinit(&result);
 
     system_meta sm ;
