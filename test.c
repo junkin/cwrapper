@@ -188,10 +188,12 @@ void set_meta_data() {
     result_init(&result);
     list_ns(c, testdir, &result);    
     parse_headers(&result, &sm, &um);    
-    result_deinit(&result);
     
+    result_deinit(&result);
+    printf("%s\n", sm.objname);
     while(um != NULL) {
 	user_meta *t = um->next;
+	printf("%s=%s %d\n", um->key, um->value, um->listable);
 	free(um);
 	um=t;
     }

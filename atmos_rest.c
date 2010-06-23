@@ -98,23 +98,74 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
     int i = 0;
     user_meta *ptr_um=NULL;
     for(; i < ws->header_count; i++) {
-
 	if(0==strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
-	    sscanf(ws->headers[i], "x-emc-meta: atime=%s mtime=%s ctime=%s itime=%s type=%s uid=%s gid=%s objectid=%s objname=%s size=%d, nlink=%d, policyname=%s\n", sm->atime,sm->mtime, sm->ctime, sm->itime, sm->type, sm->uid, sm->gid, sm->objectid, sm->objectname, &sm->size, &sm->nlink, sm->policyname);
-      
-	    sm->atime[strlen(sm->atime)-1] = '\0';
-	    sm->mtime[strlen(sm->mtime)-1] = '\0';
-	    sm->ctime[strlen(sm->ctime)-1] = '\0';
-	    sm->itime[strlen(sm->itime)-1] = '\0';      
-	    sm->type[strlen(sm->type)-1] = '\0';
-	    sm->uid[strlen(sm->uid)-1] = '\0';
-	    sm->gid[strlen(sm->gid)-1] = '\0';
-	    sm->objectid[strlen(sm->objectid)-1] = '\0';
-	    sm->objectname[strlen(sm->objectname)-1] = '\0';
+	    char *meta_ptr = ws->headers[i] + strlen(EMC_META_HDR_STR);
+	    char delims[] = ",";
+	    char *result = NULL;
+	    result = strtok( meta_ptr, delims);
+	    while (result != NULL) {
+		
+		//trim leading whitespace
+		int offset = 0;
+		for (;result[offset] == ' '; offset++) ;
+		result+=offset;
+		    
+		if(0 == strncmp(result,atime, strlen(atime)) ) {	
+		    strcpy(sm->atime, result+strlen(atime)+1);
+		} else if (0 == strncmp(result, mtime, strlen(mtime))) {
+		    strcpy(sm->mtime, result+strlen(mtime)+1);
+		} else if (0 == strncmp(result, emc_ctime, strlen(emc_ctime))) {
+		    strcpy(sm->ctime, result+strlen(emc_ctime)+1);
+		}else if (0 == strncmp(result, itime, strlen(itime))) {
+		    strcpy(sm->itime, result+strlen(itime)+1);
+		}else if (0 == strncmp(result, type, strlen(type))) {
+		    strcpy(sm->type, result+strlen(type)+1);
+		}else if (0 == strncmp(result, uid, strlen(uid))) {
+		    strcpy(sm->uid, result+strlen(uid)+1);
+		}else if (0 == strncmp(result, gid, strlen(gid))) {
+		    strcpy(sm->gid, result+strlen(gid)+1);
+		}else if (0 == strncmp(result, objectid, strlen(objectid))) {
+		    strcpy(sm->objectid, result+strlen(objectid)+1);
+		}else if (0 == strncmp(result, objname, strlen(objname))) {
+		    strcpy(sm->objname, result+strlen(objname)+1);
+		}else if (0 == strncmp(result, size, strlen(size))) {
+		    sm->size = atoi(result+strlen(size+1));
+		}else if (0 == strncmp(result, nlink,strlen(nlink))){
+		    sm->nlink = atoi(result+strlen(nlink+1));
+		}else if (0 == strncmp(result, policyname, strlen(policyname))) {
+		    strcpy(sm->policyname, result+strlen(policyname)+1);
+		} else {
 
+		    if(ptr_um) {
+			ptr_um->next = malloc(sizeof(user_meta));
+			ptr_um = ptr_um->next;
+		    } else {
+			*head_ptr_um = malloc(sizeof(user_meta));
+			ptr_um = *head_ptr_um;
+		    }
+		    bzero(ptr_um, sizeof(user_meta));
+		    ptr_um->listable = false;	
+		    char *key_value[2];
+		    int kv_count = 0;
+		    split(result, '=', key_value, &kv_count);
+		    if(kv_count ==2) {	
+			strcpy(ptr_um->key,key_value[0]);
+			strcpy(ptr_um->value,key_value[1]);
+
+		    } else {
+			printf("meta data parse error!\n");
+		    }
+		    int k;
+		    for(k=0; k<kv_count; k++) {
+			free(key_value[k]);
+		    }
+		    
+		}
+		result = strtok(NULL, delims);
+	    }
 	} else if(0==strncmp(ws->headers[i], EMC_USER_HDR_STR, strlen(EMC_USER_HDR_STR))) {
 	    printf("USERACL: %s\n", ws->headers[i]);
-      
+	    
 	} else if(0 == strncmp(ws->headers[i], EMC_LISTABLE_META_HDR_STR, strlen(EMC_LISTABLE_META_HDR_STR))) {
 	    //listable x-emc-listable-meta: meta_test=meta_pass
 	    char *pairs[1024];
@@ -148,16 +199,11 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
 		for(k=0; k<kv_count; k++) {
 		    free(key_value[k]);
 		}
-
 	    }
-
 	    int free_pairs = 0;
 	    for(free_pairs=0; free_pairs<count; free_pairs++) {
 		free(pairs[free_pairs]);
 	    }
-
-      
-	
 	} else if(0 == strncmp(ws->headers[i], EMC_META_HDR_STR, strlen(EMC_META_HDR_STR))) {
 	    ptr_um->listable=false;
       
