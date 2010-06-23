@@ -235,7 +235,7 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 {
     if(meta) {
 	static const char* user_meta_uri = "?metadata/user";
-	char *meta_uri = (char*)malloc(strlen(uri)+strlen(user_meta_uri));
+	char *meta_uri = (char*)malloc(strlen(uri)+strlen(user_meta_uri)+1);
 	sprintf(meta_uri, "%s%s", uri, user_meta_uri);
 	http_method method =POST;
 	char *headers[20];    

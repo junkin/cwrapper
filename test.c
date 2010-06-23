@@ -18,7 +18,9 @@ void testhmac() {
     const char *teststring="POST\napplication/octet-stream\n\nThu, 05 Jun 2008 16:38:19 GMT\n/rest/objects\nx-emc-date:Thu, 05 Jun 2008 16:38:19 GMT\nx-emc-groupacl:other=NONE\nx-emc-listable-meta:part4/part7/part8=quick\nx-emc-meta:part1=buy\nx-emc-uid: 6039ac182f194e15b9261d73ce044939/user1\nx-emc-useracl:john=FULL_CONTROL,mary=WRITE";
     const char *testkey="LJLuryj6zs8ste6Y3jTGQp71xq0=";
     const char *testresult="gk5BXkLISd0x5uXw5uIE80XzhVY=";
-    assert(strcmp(HMACSHA1((const unsigned char*)teststring, (char*)testkey, strlen(testkey)),testresult)==0);
+    char *freeme = HMACSHA1((const unsigned char*)teststring, (char*)testkey, strlen(testkey));
+    assert(strcmp(freeme,testresult)==0);
+    free(freeme);
     printf("finished testhmac\n");
 }
 
@@ -250,13 +252,13 @@ void create_test() {
     delete_ns(c, testdir, &result);
     result_deinit(&result);
 
-    
+    free(c);
 }
 int main() { 
-  //    create_test();
-  //    testbuildhashstring();
-  //    testhmac();
-  //    api_testing();
+    create_test();
+      testbuildhashstring();
+      testhmac();
+      api_testing();
     set_meta_data();
     header_test();
 }
