@@ -3,18 +3,18 @@
 #include <stdlib.h>
 
 #include "stdio.h"
+#include "transport.h"
 #include "atmos_rest.h"
 #include "crypto.h"
 
-static const char *user_id = "0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
-static const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
+static const char *user_id = NULL;
+static const char *key = NULL;
 static const char *endpoint = "accesspoint.emccis.com";
 
 
 //hmac validater
 
 void testhmac() {
-    printf("testhmac\n");
     const char *teststring="POST\napplication/octet-stream\n\nThu, 05 Jun 2008 16:38:19 GMT\n/rest/objects\nx-emc-date:Thu, 05 Jun 2008 16:38:19 GMT\nx-emc-groupacl:other=NONE\nx-emc-listable-meta:part4/part7/part8=quick\nx-emc-meta:part1=buy\nx-emc-uid: 6039ac182f194e15b9261d73ce044939/user1\nx-emc-useracl:john=FULL_CONTROL,mary=WRITE";
     const char *testkey="LJLuryj6zs8ste6Y3jTGQp71xq0=";
     const char *testresult="gk5BXkLISd0x5uXw5uIE80XzhVY=";
@@ -25,7 +25,6 @@ void testhmac() {
 }
 
 void testbuildhashstring() {
-    printf("testbuild_hash_string!\n"); 
     const char *teststring="POST\napplication/octet-stream\n\nThu, 05 Jun 2008 16:38:19 GMT\n/rest/objects\nx-emc-date:Thu, 05 Jun 2008 16:38:19 GMT\nx-emc-groupacl:other=NONE\nx-emc-listable-meta:part4/part7/part8=quick\nx-emc-meta:part1=buy\nx-emc-uid: 6039ac182f194e15b9261d73ce044939/user1\nx-emc-useracl:john=FULL_CONTROL,mary=WRITE";
     
     int header_count=0;
@@ -36,6 +35,7 @@ void testbuildhashstring() {
     char uid[256];
     char useracl[256];
     char listable[256];
+    char string[1024*1024];
 
     strcpy(date, "x-emc-date:Thu, 05 Jun 2008 16:38:19 GMT");
     strcpy(acl,"x-emc-groupacl:other=NONE");
@@ -51,7 +51,7 @@ void testbuildhashstring() {
     headers[header_count++] = uid;
     headers[header_count++] = useracl;
 
-    char string[1024*1024];
+
     build_hash_string(string, POST,"application/octet-stream",NULL,"Thu, 05 Jun 2008 16:38:19 GMT", "/rest/objects",headers,header_count);
     assert(strcmp(string, teststring) == 0 );
     printf("%s\n", string);
@@ -64,8 +64,14 @@ int api_testing(){
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
     char *testdir = "/capi_test";
-
-    //*** Create
+    char *body = NULL;
+    int hc = 0;
+    const int bd_size = 1024*64+2;// force boundary condistions in readfunction
+    char big_data[1024*64+2];
+    char *data = big_data;
+	postdata d;
+    char *body2 = NULL;
+	//*** Create
     result_init(&result);
     create_ns(c, testdir, NULL,NULL,  NULL, &result);
     printf("code: %d\n", result.return_code);
@@ -75,14 +81,14 @@ int api_testing(){
     //*** LIST
     result_init(&result);
     list_ns(c, testdir,&result);    
-    //result body size is not null terminated.
-    char *body = malloc(result.body_size+1);
+    //result body size is not null terminated - could be binary
+	//result = (ws_result*)malloc(result.body_size+1);
     memcpy(body, result.response_body, result.body_size);
     body[result.body_size] = '\0';
     printf("datum%d:%s\n", result.body_size,body);
     printf("code: %d\n", result.return_code);
     free(body);
-    int hc = 0;
+    
     printf("heads %d\n", result.header_count);
     for(; hc < result.header_count; hc++) {
 	printf("%s\n",result.headers[hc]);
@@ -110,13 +116,9 @@ int api_testing(){
 
     //*** UPDATE
     result_init(&result);
-    //char data[] = "This is testing data for update:";
-    int bd_size = 1024*64+2;// force boundary condistions in readfunction
-    char big_data[bd_size];
-    char *data = big_data;
-    bzero(big_data, bd_size);
+    memset(big_data, 0, bd_size);
     
-    postdata d;
+
     d.data=data;
     d.body_size = bd_size;
     update_ns(c, testdir,NULL, NULL, &d, NULL,&result);    
@@ -127,12 +129,11 @@ int api_testing(){
     result_init(&result);
     list_ns(c, testdir,&result);    
     
-    char *body2 = malloc(result.body_size+1);
+	body2=malloc(result.body_size+1);
     memcpy(body2, result.response_body, result.body_size);
     body2[result.body_size] = '\0';
     printf("datum%d:%s\n", result.body_size,body2);
     free(body2);
-    //printf("datum%d: %s\n", result.body_size,(char*)result.response_body);
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
 
@@ -147,10 +148,6 @@ int api_testing(){
     list_ns(c, testdir, &result);    
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
-
-    //get_system_meta(&result);// vs
-    //result.system_meta
-    
     free(c);
 }
 
@@ -159,19 +156,22 @@ void set_meta_data() {
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
     char *testdir = "/capi_5th";
+    user_meta meta,meta1, meta2, meta3;
+    user_meta *um = NULL;
+	system_meta sm ;
 
     //*** Create
     result_init(&result);
-    //    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
     
     //** update_meta
-    user_meta meta,meta1, meta2, meta3;
-    bzero(&meta, sizeof(user_meta));
-    bzero(&meta1, sizeof(user_meta));
-    bzero(&meta2, sizeof(user_meta));
-    bzero(&meta3, sizeof(user_meta));
+
+    memset(&meta, 0, sizeof(user_meta));
+    memset(&meta1, 0, sizeof(user_meta));
+    memset(&meta2, 0, sizeof(user_meta));
+	memset(&meta3, 0, sizeof(user_meta));
     strcpy(meta.key, "meta_test");
     strcpy(meta.value, "meta_pass");
     meta.listable=true;
@@ -187,11 +187,9 @@ void set_meta_data() {
     meta.next=&meta1;
     meta1.next=&meta2;
     meta2.next=&meta3;
-    //user_meta_ns(c, testdir, NULL, &meta, &result);
+    user_meta_ns(c, testdir, NULL, &meta, &result);
     result_deinit(&result);
     printf("send metadata\n");
-    system_meta sm ;
-    user_meta *um = NULL;
 
     result_init(&result);
     list_ns(c, testdir, &result);    
@@ -208,7 +206,7 @@ void set_meta_data() {
 	free(um);
 	um=t;
     }
-      
+  
       
     free(c);
 }
@@ -220,13 +218,15 @@ void create_test() {
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
     char *testdir="/capi_testing";
-    //*** Create
-    result_init(&result);
+    system_meta sm;
+	    user_meta *um = NULL;	
+	//*** Create
+
+	result_init(&result);
     create_ns(c, testdir, NULL,NULL,  NULL, &result);
     list_ns(c, testdir, &result);
-    system_meta sm;
-    bzero(&sm, sizeof(sm));
-    user_meta *um;
+
+    memset(&sm, 0, sizeof(sm));
     parse_headers(&result, &sm, &um);
     result_deinit(&result);
 
@@ -237,11 +237,26 @@ void create_test() {
 
     free(c);
 }
-int main() { 
-  create_test();
-  testbuildhashstring();
-  testhmac();
-  api_testing();
-  set_meta_data();
 
+void list() {
+    credentials *c = init_ws(user_id, key, endpoint);
+    ws_result result;
+    char *testdir="/";
+    result_init(&result);
+    list_ns(c, testdir,&result);    
+    printf("%s\n", (char*)result.response_body);
+    result_deinit(&result);
+}
+
+int main() { 
+  if(user_id) {
+    list();
+    create_test();
+    testbuildhashstring();
+    testhmac();
+    api_testing();
+    set_meta_data();
+  } else {
+    printf("please edit test.c and add your credentials for user_id and shared_secret\n");
+  }
 }

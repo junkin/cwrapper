@@ -8,7 +8,7 @@
 
 
 
-
+#define _CRT_SECURE_NO_WARNINGS 1
 
 credentials* init_ws(const char *user_id, const char *key, const char *endpoint) 
 {
@@ -63,7 +63,7 @@ void list_ns(credentials *c,char * uri, ws_result *ws)
 
 int delete_ns(credentials *c, char *uri, ws_result *ws) 
 {
-    http_method method = DELETE;
+    http_method method = 0;//DELETE;
     char * headers[20];
     http_request_ns (c, method, uri,NULL, headers, 0, NULL, ws);
     return ws->return_code;
@@ -111,22 +111,20 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
 		}else if (0 == strncmp(result, policyname, strlen(policyname))) {
 		    strcpy(sm->policyname, result+strlen(policyname)+1);
 		} else {
-
+			char um_delims[] = "=";
+			char *meta_context;
+		    char *um_result = NULL;
+			 int meta_index = 0;
 		    if(ptr_um) {
 			ptr_um->next = malloc(sizeof(user_meta));
 			ptr_um = ptr_um->next;
 		    } else {
-			*head_ptr_um = malloc(sizeof(user_meta));
+				*head_ptr_um = malloc(sizeof(user_meta));
 			ptr_um = *head_ptr_um;
 		    }
-		    bzero(ptr_um, sizeof(user_meta));
-		    ptr_um->listable = false;	
-
-		    char um_delims[] = "=";
-		    char *meta_context;
-		    char *um_result = NULL;
+		    memset(ptr_um, 0,sizeof(user_meta));
+		    ptr_um->listable = false;	  
 		    um_result = strtok_r(result, um_delims, &meta_context);
-		    int meta_index = 0;
 		    while (um_result != NULL) {
 		      if(0==meta_index) {
 			strcpy(ptr_um->key,um_result);		  
@@ -140,7 +138,7 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
 		result = strtok_r(NULL, delims, &hdr_context);
 	    }
 	} else if(0==strncmp(ws->headers[i], EMC_USER_HDR_STR, strlen(EMC_USER_HDR_STR))) {
-	    printf("USERACL: %s\n", ws->headers[i]);
+	  ;
 	    
 	} else if(0 == strncmp(ws->headers[i], EMC_LISTABLE_META_HDR_STR, strlen(EMC_LISTABLE_META_HDR_STR))) {
 	  //listable x-emc-listable-meta: meta_test=meta_pass
@@ -149,21 +147,21 @@ void parse_headers(ws_result* ws, system_meta* sm, user_meta** head_ptr_um) {
 	  char *hdr_context = NULL;
 	  hdr_result = strtok_r(ws->headers[i]+strlen(EMC_LISTABLE_META_HDR_STR), hdr_delims, &hdr_context);
 	  while (hdr_result != NULL) {
-	    if(ptr_um) {
+	    char delims[] = "=";
+	    char *result = NULL;
+	    char *inner_context;
+	int meta_index = 0;
+		  if(ptr_um) {
 	      ptr_um->next = malloc(sizeof(user_meta));
 	      ptr_um = ptr_um->next;
 	    } else {
 	      *head_ptr_um = malloc(sizeof(user_meta));
 	      ptr_um = *head_ptr_um;
 	    }
-	    bzero(ptr_um, sizeof(user_meta));
+	    memset(ptr_um,0, sizeof(user_meta));
 	    
 	    ptr_um->listable = true;	
-	    char delims[] = "=";
-	    char *result = NULL;
-	    char *inner_context;
 	    result = strtok_r(hdr_result, delims, &inner_context);
-	    int meta_index = 0;
 	    while (result != NULL) {
 	      if(0==meta_index) {
 		strcpy(ptr_um->key,result);		  
@@ -188,8 +186,6 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
     if(meta) {
 	static const char* user_meta_uri = "?metadata/user";
 	char *meta_uri = (char*)malloc(strlen(uri)+strlen(user_meta_uri)+1);
-	sprintf(meta_uri, "%s%s", uri, user_meta_uri);
-	http_method method =POST;
 	char *headers[20];    
 	int header_count =0;
 	
@@ -202,6 +198,8 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 	int meta_count = 0;
 	int meta_listable_count = 0;
 	
+	sprintf(meta_uri, "%s%s", uri, user_meta_uri);
+	//http_method method =POST;
 	
 	for( ; index !=NULL;  index=index->next) {
 	    if(index->listable == false) {
@@ -226,7 +224,7 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 	    }
 	}
 	
-	http_request_ns (c, method, meta_uri, content_type, headers, header_count, NULL, ws);
+	http_request_ns (c, POST, meta_uri, content_type, headers, header_count, NULL, ws);
 	free(meta_uri);
     }
     return ws->return_code;

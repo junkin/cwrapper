@@ -18,7 +18,9 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
 
     //all lowercase BEFORE entering sort..
     
-    int is;
+    int is = 0;
+	int i = 0;	
+	int length = 0;
     for(is = 0; is < header_count; is++) {
 	lowercase(emc_sorted_headers[is]);
     }
@@ -46,7 +48,6 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
     }
 
     req_ptr+=sprintf(req_ptr,"%s\n",uri);
-    int i;
     for(i = 0; i < header_count; i++) {
 	if (i < header_count-1)
 	    {
@@ -57,7 +58,7 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
 		req_ptr+=sprintf(req_ptr,"%s", emc_sorted_headers[i]);
 	    }
     }
-    int length = (int)(req_ptr-hash_string);
+    length = (int)(req_ptr-hash_string);
     //printf("length %d", length);
     //printf("%s\n", hash_string);
     return length;
