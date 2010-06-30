@@ -77,12 +77,9 @@ static const char* nlink="nlink";
 static const char* policyname="policyname";
 
 
-//static const char[][] system_meta_names= "atime", "mtime", "ctime", "itime", "type", "uid", "gid", "objectid", "objname", "size", "nlink", "policyname";
-//static const int system_meta_count = 12;
-
 //Namespace
 void create_ns(credentials *c, char * uri, char *content_type, acl *acl, user_meta *meta, ws_result *ws);
-void list_ns(credentials *c, char * uri, ws_result *ws);
+void list_ns(credentials *c, char * uri, postdata*d, int count, ws_result *ws);
 void update_ns(credentials *c, char * uri, char *content_type, acl *acl, postdata* data, user_meta *meta, ws_result *ws);
 int delete_ns(credentials *c, char *object_id, ws_result *ws);
 int set_meta_ns(credentials *c, const char *object_name, const char *key, const char *val);

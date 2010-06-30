@@ -83,12 +83,7 @@ void result_deinit(ws_result* result) {
 const char *http_request_ns(credentials *c, http_method method, char *uri,char *content_type, char **headers, int header_count, postdata * data, ws_result* ws_result) {
 	
     char * ns_uri = NULL;
-	if(data){
-	data->bytes_written=0;
-	data->bytes_remaining=data->body_size;
-    }
-    ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri)+1);
-    
+    ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri)+1);    
     sprintf(ns_uri,"%s%s",namespace_uri, uri);
     http_request(c, method, ns_uri, content_type, headers, header_count, data, ws_result);    
     free((char*)ns_uri);
@@ -97,7 +92,8 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
 {
-  CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
+  //CURLcode curl_code = 
+  curl_global_init(CURL_GLOBAL_ALL);
   //    if(!curl_code) {
   //;
   //} else {
@@ -109,24 +105,26 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     char date[256];
     char uidheader[1024];
     char dateheader[1024];
-	char groupaclheader[1024];
-	char *endpoint_url = NULL;
-	size_t endpoint_size;
-	char errorbuffer[1024*1024];
-	struct curl_slist *chunk = NULL;
-	char hash_string[1024];
-	char * range = NULL;//FIXME
-	char signature[1024];
-	char content_type_header[1024];
-	int i;
-	char *signed_hash = NULL;
+    char groupaclheader[1024];
+    char *endpoint_url = NULL;
+    size_t endpoint_size;
+    char errorbuffer[1024*1024];
+    struct curl_slist *chunk = NULL;
+    char hash_string[1024];
+    char range[1024];
+    char signature[1024];
+    char content_type_header[1024];
+    int i;
+    char *signed_hash = NULL;
+    char content_length_header[1024];
+    char range_header[1024];
 
 
-    
+
+    memset(range, 0, 1024);
     get_date(date);
     snprintf(dateheader,1024,"X-Emc-Date:%s", date);
     snprintf(uidheader,1024,"X-Emc-Uid:%s",c->tokenid);    
-    
     snprintf(groupaclheader,1024,"X-Emc-groupacl:other=NONE");    
     headers[header_count++] = dateheader;
     //FIXME groupacl headers breaks sig string
@@ -184,13 +182,30 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	case OPTIONS:
 	  break;
 	}
-	
+	if(data&&data->offset) 	    snprintf(range, 1024, "Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+ 
 	build_hash_string(hash_string, method, content_type, range,NULL,uri, headers,header_count);
+	printf("%s\n", hash_string);
+	if(data){
+	  data->bytes_written=0;
+	  data->bytes_remaining=data->body_size;
+	  if(method != GET) {
+	    snprintf(content_length_header,1024, "content-length: %zu", data->body_size);
+	    headers[header_count++]=content_length_header;
+	  }
+	  
+	  if(data->offset > 0) {
+	    snprintf(range_header, 1024, "range: Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+	    headers[header_count++] = range_header;
+	  }
+	}
 
 	for(i=0;i<header_count; i++) {
+	  printf("adding %s\n", headers[i]);
 	    chunk = curl_slist_append(chunk, headers[i]);	
 	}
 	
+
 	signed_hash = (char*)sign(hash_string,c->secret);
 	snprintf(signature,1024,"X-Emc-Signature:%s", signed_hash);
 	free(signed_hash);
@@ -199,19 +214,6 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	curl_slist_append(chunk,"Transfer-Encoding:");
 	curl_slist_append(chunk, content_type_header);
 	curl_slist_append(chunk,signature);
-
-
-	if(data) {
-	    char content_length_header[1024];
-	    snprintf(content_length_header,1024, "content-length: %zu", data->body_size);
-	    curl_slist_append(chunk,content_length_header);
-	    if(data->offset > 0) {
-	      char range_header[1024];
-	      snprintf(range_header, 1024, "range: Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
-	      curl_slist_append(chunk, range_header);
-	    }
-		
-	}
 	result_code = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 	result_code = curl_easy_perform(curl);
 	

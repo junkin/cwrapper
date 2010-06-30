@@ -25,7 +25,7 @@ void create_ns(credentials *c, char * uri, char *content_type ,acl *acl,user_met
 {
     
     http_method method = POST;
-    char *headers[20];
+    char **headers = calloc(20,sizeof(char*));
     if(acl) {
 	//add acl headers
     }
@@ -33,12 +33,13 @@ void create_ns(credentials *c, char * uri, char *content_type ,acl *acl,user_met
 	//add meta headers on create
     }
     http_request_ns(c, method,uri,content_type, headers,0, NULL, ws);
-    
+    free(headers);    
 }
 
 void  update_ns (credentials *c, char * uri, char *content_type, acl *acl, postdata *data,user_meta *meta, ws_result *ws) 
 {
-    char *headers[20];  
+
+    char **headers = calloc(20,sizeof(char*));
     http_method method = PUT;    
     if(acl) {
 	//add acl headers
@@ -47,25 +48,30 @@ void  update_ns (credentials *c, char * uri, char *content_type, acl *acl, postd
 	//add meta headers on create
     }
     
-    http_request_ns(c, method, uri, content_type,headers, 0, (void*)data, ws);
-
+    http_request_ns(c, method, uri, content_type,headers, 0, data, ws);
+    free(headers);
 }
 
-void list_ns(credentials *c,char * uri, ws_result *ws) 
+//need offset, size and x-emc-limit..
+void list_ns(credentials *c,char * uri, postdata *pd, int limit, ws_result *ws) 
 {
     http_method method =GET;
-    char *headers[20];    
-    
-    http_request_ns (c, method, uri, NULL, headers, 0, NULL, ws);
-    
+    char **headers = calloc(20,sizeof(char*));
+    int count = 0;
+    if (limit) {
+      sprintf(headers[count++], "x-emc-limit: %d", limit);
+    }
+    http_request_ns (c, method, uri, NULL, headers, count, pd, ws);
+    free(headers);    
 }
 
 
 int delete_ns(credentials *c, char *uri, ws_result *ws) 
 {
-    http_method method = 0;//DELETE;
-    char * headers[20];
+    http_method method = DELETE;
+    char **headers = calloc(20,sizeof(char*));
     http_request_ns (c, method, uri,NULL, headers, 0, NULL, ws);
+    free(headers);
     return ws->return_code;
 }
 
@@ -186,7 +192,7 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
     if(meta) {
 	static const char* user_meta_uri = "?metadata/user";
 	char *meta_uri = (char*)malloc(strlen(uri)+strlen(user_meta_uri)+1);
-	char *headers[20];    
+	char **headers = calloc(20,sizeof(char*));
 	int header_count =0;
 	
 	char emc_meta[8192]; //FIXME is 8k the header limit?
@@ -226,6 +232,7 @@ int user_meta_ns(credentials *c, const char *uri, char * content_type, user_meta
 	
 	http_request_ns (c, POST, meta_uri, content_type, headers, header_count, NULL, ws);
 	free(meta_uri);
+	free(headers);
     }
     return ws->return_code;
 }

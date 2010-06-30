@@ -80,9 +80,9 @@ int api_testing(){
 
     //*** LIST
     result_init(&result);
-    list_ns(c, testdir,&result);    
-    //result body size is not null terminated - could be binary
-    body = (ws_result*)malloc(result.body_size+1);
+    list_ns(c, testdir,NULL, 0,&result);    
+    //result body size is not NULL terminated - could be binary
+    body = malloc(result.body_size+1);
     
     memcpy(body, result.response_body, result.body_size);
     body[result.body_size] = '\0';
@@ -105,7 +105,7 @@ int api_testing(){
 
     //*** LIST
     result_init(&result);
-    list_ns(c, testdir, &result);    
+    list_ns(c, testdir, NULL, 0,&result);    
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
 
@@ -128,7 +128,7 @@ int api_testing(){
 
     //*** LIST
     result_init(&result);
-    list_ns(c, testdir,&result);    
+    list_ns(c, testdir,NULL, 0,&result);    
     
 	body2=malloc(result.body_size+1);
     memcpy(body2, result.response_body, result.body_size);
@@ -146,7 +146,7 @@ int api_testing(){
 
     //*** LIST
     result_init(&result);
-    list_ns(c, testdir, &result);    
+    list_ns(c, testdir,NULL, 0, &result);    
     printf("code: %d\n", result.return_code);
     result_deinit(&result);
     free(c);
@@ -193,7 +193,7 @@ void set_meta_data() {
     printf("send metadata\n");
 
     result_init(&result);
-    list_ns(c, testdir, &result);    
+    list_ns(c, testdir, NULL, 0, &result);    
     
     printf("fetched` metadata\n");
     
@@ -225,7 +225,7 @@ void create_test() {
 
 	result_init(&result);
     create_ns(c, testdir, NULL,NULL,  NULL, &result);
-    list_ns(c, testdir, &result);
+    list_ns(c, testdir, NULL, 0, &result);
 
     memset(&sm, 0, sizeof(sm));
     parse_headers(&result, &sm, &um);
@@ -245,7 +245,7 @@ void list() {
     ws_result result;
     char *testdir="/";
     result_init(&result);
-    list_ns(c, testdir,&result);    
+    list_ns(c, testdir, NULL, 0,&result);    
     if(result.response_body)
     printf("%s\n", (char*)result.response_body);
     else 
@@ -267,7 +267,7 @@ void capstest() {
     result_deinit(&result);
 
     result_init(&result);
-    list_ns(c, testdir, &result);
+    list_ns(c, testdir, NULL, 0, &result);
     memset(&sm, 0, sizeof(sm));
     parse_headers(&result, &sm, &um);
     result_deinit(&result);
@@ -282,10 +282,76 @@ void capstest() {
 
 
 }
+
+void rangestest() {
+
+    credentials *c = init_ws(user_id, key, endpoint);
+    ws_result result;
+    char *testdir="/test123456/afile";
+    system_meta sm;
+    user_meta *um = NULL;	
+    postdata pd;
+    postdata rd;
+
+    memset(&pd, 0, sizeof(pd));
+
+    pd.data = malloc(32);
+    memset(pd.data,5, 32);
+    pd.body_size=32;
+    //pd.offset=31;
+
+    //*** Create
+    result_init(&result);
+    //   create_ns(c, testdir, NULL,NULL,  NULL, &result);
+   result_deinit(&result);
+    
+
+
+
+    result_init(&result);
+    //    update_ns(c, testdir,NULL, NULL, &pd, NULL,&result);    
+    result_deinit(&result);
+
+    //Now grow the object
+    memset(pd.data,1, 32);
+    pd.body_size=32;
+    pd.offset=31;
+
+    result_init(&result);
+    //    update_ns(c, testdir,NULL, NULL, &pd, NULL,&result);    
+    result_deinit(&result);
+
+    result_init(&result);
+    rd.offset=31;
+    rd.body_size=32;
+    list_ns(c, testdir,&rd, 0, &result);
+    memset(&sm, 0, sizeof(sm));
+    parse_headers(&result, &sm, &um);
+    while(um != NULL) {
+	user_meta *t = um->next;
+	free(um);
+	um=t;
+    }
+    
+    result_deinit(&result);
+
+    //*** Delete
+    result_init(&result);
+    //    delete_ns(c, testdir, &result);
+    result_deinit(&result);
+
+    free(pd.data);
+    free(c);
+
+
+}
+
 int main() { 
 
   if(user_id) {
-    capstest();
+    rangestest();
+    //    capstest();
+    //    api_testing();
     /*    list();
     create_test();
     testbuildhashstring();
