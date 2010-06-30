@@ -7,8 +7,8 @@
 #include "atmos_rest.h"
 #include "crypto.h"
 
-static const char *user_id = NULL;
-static const char *key = NULL;
+static const char *user_id ="0e069767430c4d37997853b058eb0af8/EMC007A49DEEA84C837E";
+static const char *key = "YlVdJFb03nYtXZk0lk0KjQplVcI=";
 static const char *endpoint = "accesspoint.emccis.com";
 
 
@@ -63,7 +63,7 @@ int api_testing(){
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    char *testdir = "/capi_test";
+    char *testdir = "/.Trash_test";
     char *body = NULL;
     int hc = 0;
     const int bd_size = 1024*64+2;// force boundary condistions in readfunction
@@ -82,7 +82,8 @@ int api_testing(){
     result_init(&result);
     list_ns(c, testdir,&result);    
     //result body size is not null terminated - could be binary
-	//result = (ws_result*)malloc(result.body_size+1);
+    body = (ws_result*)malloc(result.body_size+1);
+    
     memcpy(body, result.response_body, result.body_size);
     body[result.body_size] = '\0';
     printf("datum%d:%s\n", result.body_size,body);
@@ -155,7 +156,7 @@ void set_meta_data() {
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    char *testdir = "/capi_5th";
+    char *testdir = "/.Trash_5th";
     user_meta meta,meta1, meta2, meta3;
     user_meta *um = NULL;
 	system_meta sm ;
@@ -217,7 +218,7 @@ void create_test() {
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    char *testdir="/capi_testing";
+    char *testdir="/.Trash_testing";
     system_meta sm;
 	    user_meta *um = NULL;	
 	//*** Create
@@ -235,6 +236,7 @@ void create_test() {
     delete_ns(c, testdir, &result);
     result_deinit(&result);
 
+
     free(c);
 }
 
@@ -244,18 +246,52 @@ void list() {
     char *testdir="/";
     result_init(&result);
     list_ns(c, testdir,&result);    
+    if(result.response_body)
     printf("%s\n", (char*)result.response_body);
+    else 
+      printf("error in list no response\n");
+
     result_deinit(&result);
 }
 
+void capstest() {
+    credentials *c = init_ws(user_id, key, endpoint);
+    ws_result result;
+    char *testdir="/FUSETEST/";
+    system_meta sm;
+    user_meta *um = NULL;	
+    //*** Create
+
+    result_init(&result);
+    create_ns(c, testdir, NULL,NULL,  NULL, &result);
+    result_deinit(&result);
+
+    result_init(&result);
+    list_ns(c, testdir, &result);
+    memset(&sm, 0, sizeof(sm));
+    parse_headers(&result, &sm, &um);
+    result_deinit(&result);
+
+    //*** Delete
+    //    result_init(&result);
+    //    delete_ns(c, testdir, &result);
+    //    result_deinit(&result);
+
+
+    free(c);
+
+
+}
 int main() { 
+
   if(user_id) {
-    list();
+    capstest();
+    /*    list();
     create_test();
     testbuildhashstring();
     testhmac();
     api_testing();
-    set_meta_data();
+    set_meta_data();*/
   } else {
     printf("please edit test.c and add your credentials for user_id and shared_secret\n");
   }

@@ -4,6 +4,7 @@
 typedef enum  {
 	POST,
 	GET,
+	DELETE,
 	PUT,
 	HEAD,
 	OPTIONS

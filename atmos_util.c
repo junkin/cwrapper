@@ -15,14 +15,14 @@ int cstring_cmp(const void *a, const void *b)
 int build_hash_string (char *hash_string, http_method method, const char *content_type, const char *range,const char *date, const char *uri, char **emc_sorted_headers, const int header_count) 
 {
     char *req_ptr=hash_string;
-
+    char *loweruri = malloc(strlen(uri)+1);
     //all lowercase BEFORE entering sort..
     
     int is = 0;
 	int i = 0;	
 	int length = 0;
     for(is = 0; is < header_count; is++) {
-	lowercase(emc_sorted_headers[is]);
+	lowercaseheader(emc_sorted_headers[is]);
     }
 	
     qsort(emc_sorted_headers, header_count, sizeof(char*),cstring_cmp);
@@ -47,7 +47,9 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
 	req_ptr+=sprintf(req_ptr,"\n");
     }
 
-    req_ptr+=sprintf(req_ptr,"%s\n",uri);
+    strcpy(loweruri, uri);
+    lowercase(loweruri);
+    req_ptr+=sprintf(req_ptr,"%s\n",loweruri);
     for(i = 0; i < header_count; i++) {
 	if (i < header_count-1)
 	    {
@@ -61,6 +63,7 @@ int build_hash_string (char *hash_string, http_method method, const char *conten
     length = (int)(req_ptr-hash_string);
     //printf("length %d", length);
     //printf("%s\n", hash_string);
+    free(loweruri);
     return length;
 
 }
@@ -77,9 +80,14 @@ void get_date(char *formated_time)
     
 }
 
-void lowercase(char *s) {
+void lowercaseheader(char *s) {
     int i = 0;
-    for( ; s[i]!=':'; i++)
+    for( ; s[i] != ':'; i++)
 	s[i] = tolower(s[i]);
 }
 
+void lowercase(char *s) {
+    int i = 0;
+    for( ; s[i] != '\0'; i++)
+	s[i] = tolower(s[i]);
+}

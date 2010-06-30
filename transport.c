@@ -97,12 +97,12 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
 {
-    CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
-	if(!curl_code) {
-		;
-	} else {
+  CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
+  //    if(!curl_code) {
+  //;
+  //} else {
 
-    CURL  *curl = curl_easy_init();
+      CURL  *curl = curl_easy_init();
     CURLcode result_code;
     //struct curl_httppost *formpost=NULL;
     const int connect_timeout = 200;
@@ -121,8 +121,10 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	int i;
 	char *signed_hash = NULL;
 
-	snprintf(dateheader,1024,"X-Emc-Date:%s", date);
+
+    
     get_date(date);
+    snprintf(dateheader,1024,"X-Emc-Date:%s", date);
     snprintf(uidheader,1024,"X-Emc-Uid:%s",c->tokenid);    
     
     snprintf(groupaclheader,1024,"X-Emc-groupacl:other=NONE");    
@@ -199,10 +201,15 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	curl_slist_append(chunk,signature);
 
 
-		if(data) {
+	if(data) {
 	    char content_length_header[1024];
 	    snprintf(content_length_header,1024, "content-length: %zu", data->body_size);
 	    curl_slist_append(chunk,content_length_header);
+	    if(data->offset > 0) {
+	      char range_header[1024];
+	      snprintf(range_header, 1024, "range: Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+	      curl_slist_append(chunk, range_header);
+	    }
 		
 	}
 	result_code = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
@@ -215,5 +222,4 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     }
     free(endpoint_url);
     return  NULL;
-}
 }
