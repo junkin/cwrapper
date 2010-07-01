@@ -181,10 +181,17 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	case OPTIONS:
 	  break;
 	}
-	if(data&&data->offset) 	    snprintf(range, 1024, "Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+
+	if(data) {
+	  if(data->offset) {
+	    snprintf(range, 1024, 
+		     "Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+	  } else if(data->body_size) {
+	    snprintf(range, 1024, "Bytes=0-%d", data->body_size-1);
+	  }
+	}
  
 	build_hash_string(hash_string, method, content_type, range,NULL,uri, headers,header_count);
-	printf("%s\n", hash_string);
 	if(data){
 	  data->bytes_written=0;
 	  data->bytes_remaining=data->body_size;
@@ -200,7 +207,6 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	}
 
 	for(i=0;i<header_count; i++) {
-	  printf("adding %s\n", headers[i]);
 	    chunk = curl_slist_append(chunk, headers[i]);	
 	}
 	

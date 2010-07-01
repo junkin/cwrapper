@@ -218,9 +218,9 @@ void create_test() {
 
     credentials *c = init_ws(user_id, key, endpoint);
     ws_result result;
-    char *testdir="/.Trash_testing";
+    char *testdir="/FUSETEST";
     system_meta sm;
-	    user_meta *um = NULL;	
+    user_meta *um = NULL;	
 	//*** Create
 
 	result_init(&result);
@@ -349,11 +349,12 @@ void rangestest() {
 int main() { 
 
   if(user_id) {
-    rangestest();
-    //    capstest();
-    //    api_testing();
-    /*    list();
     create_test();
+    //rangestest();
+    //    capstest();
+    //api_testing();
+    /*    list();
+
     testbuildhashstring();
     testhmac();
     api_testing();
