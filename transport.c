@@ -92,7 +92,7 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
 {
-  CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
+
   //    if(!curl_code) {
   //;
   //} else {
@@ -117,8 +117,8 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     char *signed_hash = NULL;
     char content_length_header[1024];
     char range_header[1024];
-
-
+    //CURLcode curl_code = 
+    curl_global_init(CURL_GLOBAL_ALL);
 
     memset(range, 0, 1024);
     get_date(date);
@@ -170,7 +170,7 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	    curl_easy_setopt(curl, CURLOPT_READFUNCTION, readfunc);
 	    
 	    break;
-	case DELETE:
+	case aDELETE:
 	    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"); 
 	    break;
 	case HEAD:
