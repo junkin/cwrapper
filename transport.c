@@ -18,7 +18,7 @@ size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 	
 	if(ud->bytes_remaining) {
 	    if(ud->bytes_remaining > size*nmemb) {
-		memcpy(ptr, ud->data+ud->bytes_written, size*nmemb);
+		memcpy((char*)ptr, (char*)(ud->data+ud->bytes_written), size*nmemb);
 		ud->bytes_written+=size+nmemb;
 		ud->bytes_remaining -=size*nmemb;
 		return size*nmemb;
@@ -35,12 +35,12 @@ size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     ws_result *ws = (ws_result*)stream;
-
-    int data_offset = ws->body_size;
-    int mem_required = size*nmemb;
+	void *new_response = NULL;
+	size_t data_offset = ws->body_size;
+    size_t mem_required = size*nmemb;
     
     ws->body_size+= mem_required;
-    void * new_response = realloc(ws->response_body, ws->body_size);
+    new_response = realloc(ws->response_body, ws->body_size);
     if(new_response) {
 	ws->response_body = new_response;
     } else {
@@ -54,7 +54,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, void *stream)
 size_t headerfunc(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     ws_result *ws = (ws_result*)stream;
-    int mem_required = size*nmemb-2;
+	size_t mem_required = size*nmemb-2;
 
     ws->headers[ws->header_count] = malloc(mem_required+1);
     memcpy(ws->headers[ws->header_count],ptr, mem_required);
@@ -68,26 +68,22 @@ void result_init(ws_result *result) {
     result->return_code = -1;
     result->response_body = NULL;
     result->body_size = 0;
-    bzero(result->headers, sizeof(result->headers));
+   memset(result->headers, 0,sizeof(result->headers));
     result->header_count=0;
 }
 
 void result_deinit(ws_result* result) {
-    free(result->response_body);
-    int i = 0;
+	int i = 0;
+	free(result->response_body);
     for(; i < result->header_count; i++) {
 	free(result->headers[i]);
     }
 }
 
 const char *http_request_ns(credentials *c, http_method method, char *uri,char *content_type, char **headers, int header_count, postdata * data, ws_result* ws_result) {
-
-    if(data){
-	data->bytes_written=0;
-	data->bytes_remaining=data->body_size;
-    }
-    char *ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri)+1);
-    
+	
+    char * ns_uri = NULL;
+    ns_uri = (char*)malloc(strlen(uri)+strlen(namespace_uri)+1);    
     sprintf(ns_uri,"%s%s",namespace_uri, uri);
     http_request(c, method, ns_uri, content_type, headers, header_count, data, ws_result);    
     free((char*)ns_uri);
@@ -96,21 +92,39 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
 {
-    CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
-    if(!curl_code) {
-	;
-    }
-    CURL  *curl = curl_easy_init();
+  //CURLcode curl_code = 
+  curl_global_init(CURL_GLOBAL_ALL);
+  //    if(!curl_code) {
+  //;
+  //} else {
+
+      CURL  *curl = curl_easy_init();
     CURLcode result_code;
     //struct curl_httppost *formpost=NULL;
     const int connect_timeout = 200;
     char date[256];
-    get_date(date);
-    char dateheader[1024];
-    snprintf(dateheader,1024,"X-Emc-Date:%s", date);
     char uidheader[1024];
-    snprintf(uidheader,1024,"X-Emc-Uid:%s",c->tokenid);    
+    char dateheader[1024];
     char groupaclheader[1024];
+    char *endpoint_url = NULL;
+    size_t endpoint_size;
+    char errorbuffer[1024*1024];
+    struct curl_slist *chunk = NULL;
+    char hash_string[1024];
+    char range[1024];
+    char signature[1024];
+    char content_type_header[1024];
+    int i;
+    char *signed_hash = NULL;
+    char content_length_header[1024];
+    char range_header[1024];
+
+
+
+    memset(range, 0, 1024);
+    get_date(date);
+    snprintf(dateheader,1024,"X-Emc-Date:%s", date);
+    snprintf(uidheader,1024,"X-Emc-Uid:%s",c->tokenid);    
     snprintf(groupaclheader,1024,"X-Emc-groupacl:other=NONE");    
     headers[header_count++] = dateheader;
     //FIXME groupacl headers breaks sig string
@@ -121,18 +135,15 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	content_type = "application/octet-stream";
     }
     
-    char *endpoint_url;
-    int endpoint_size = strlen(c->accesspoint)+strlen(uri) +1;
+    
+    endpoint_size = strlen(c->accesspoint)+strlen(uri) +1;
     endpoint_url = (char*)malloc(endpoint_size);
     
     snprintf(endpoint_url, endpoint_size, "%s%s", c->accesspoint, uri);
 
-    char errorbuffer[1024*1024];
     // set up flags this should move into transport layercyrk
     if (curl) {
 	//curl_version_info_data *version_data = curl_version_info(CURLVERSION_NOW);
-
-	struct curl_slist *chunk = NULL;
 
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
 	curl_easy_setopt(curl, CURLOPT_URL, endpoint_url);
@@ -171,20 +182,31 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	case OPTIONS:
 	  break;
 	}
-	
-	char hash_string[1024];
-	char * range = NULL;//FIXME
+	if(data&&data->offset) 	    snprintf(range, 1024, "Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+ 
 	build_hash_string(hash_string, method, content_type, range,NULL,uri, headers,header_count);
-	char signature[1024];
-	char content_type_header[1024];
+	printf("%s\n", hash_string);
+	if(data){
+	  data->bytes_written=0;
+	  data->bytes_remaining=data->body_size;
+	  if(method != GET) {
+	    snprintf(content_length_header,1024, "content-length: %zu", data->body_size);
+	    headers[header_count++]=content_length_header;
+	  }
+	  
+	  if(data->offset > 0) {
+	    snprintf(range_header, 1024, "range: Bytes=%d-%d", data->offset,data->offset+data->body_size-1);
+	    headers[header_count++] = range_header;
+	  }
+	}
 
-	
-	int i;
 	for(i=0;i<header_count; i++) {
+	  printf("adding %s\n", headers[i]);
 	    chunk = curl_slist_append(chunk, headers[i]);	
 	}
 	
-	char *signed_hash = (char*)sign(hash_string,c->secret);
+
+	signed_hash = (char*)sign(hash_string,c->secret);
 	snprintf(signature,1024,"X-Emc-Signature:%s", signed_hash);
 	free(signed_hash);
 	snprintf(content_type_header, 1024,"content-type:%s", content_type); 
@@ -192,14 +214,6 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
 	curl_slist_append(chunk,"Transfer-Encoding:");
 	curl_slist_append(chunk, content_type_header);
 	curl_slist_append(chunk,signature);
-
-
-	if(data) {
-	    char content_length_header[1024];
-	    snprintf(content_length_header,1024, "content-length: %zu", data->body_size);
-	    curl_slist_append(chunk,content_length_header);
-		
-	}
 	result_code = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 	result_code = curl_easy_perform(curl);
 	
@@ -211,4 +225,3 @@ const char *http_request(credentials *c, http_method method, char *uri, char *co
     free(endpoint_url);
     return  NULL;
 }
-

@@ -2,7 +2,7 @@ LIBDIR = -L/usr/local/lib
 LIBS= -lssl -lcrypto -lcurl
 SRC= atmos_rest.c crypto.c transport.c atmos_util.c
 OBJ= atmos_rest.o crypto.o transport.o atmos_util.o
-FLAGS = -Wall -Wextra -fPIC -g -c 
+FLAGS = -Wall -Wextra -fPIC -g -c
 
 TESTSRC = test.c
 TESTLIBS = -latmos
@@ -17,7 +17,7 @@ objects: $(SRC)
 lib: $(OBJ)
 	gcc $(SOFLAGS) $(OBJ) 
 test: $(TESTSRC)
-	gcc -g -o atmostest $(TESTSRC) $(SRC) $(LIBS) $(LIBDIR)
+	gcc -pg -g -o atmostest ${OBJ} $(TESTSRC) $(LIBS) $(LIBDIR)
 
 clean:
 	rm *.o

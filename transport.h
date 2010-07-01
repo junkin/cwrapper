@@ -13,8 +13,8 @@ typedef struct PD {
     char *data;
     size_t body_size;
     size_t bytes_remaining;
+    size_t offset;
     size_t bytes_written;
-
 }postdata;
 
 typedef struct hdrval {
