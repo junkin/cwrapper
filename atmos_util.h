@@ -5,7 +5,7 @@ typedef enum  {
 	POST,
 	GET,
 	PUT,
-	DELETE:
+	DELETE,
 	HEAD,
 	OPTIONS
 } http_method;
