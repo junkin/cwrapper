@@ -92,8 +92,7 @@ const char *http_request_ns(credentials *c, http_method method, char *uri,char *
 
 const char *http_request(credentials *c, http_method method, char *uri, char *content_type, char **headers, int header_count, postdata *data, ws_result* ws_result) 
 {
-  //CURLcode curl_code = 
-  curl_global_init(CURL_GLOBAL_ALL);
+  CURLcode curl_code = curl_global_init(CURL_GLOBAL_ALL);
   //    if(!curl_code) {
   //;
   //} else {

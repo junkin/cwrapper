@@ -68,7 +68,7 @@ void list_ns(credentials *c,char * uri, postdata *pd, int limit, ws_result *ws)
 
 int delete_ns(credentials *c, char *uri, ws_result *ws) 
 {
-    http_method method = DELETE;
+    http_method method = aDELETE;
     char **headers = calloc(20,sizeof(char*));
     http_request_ns (c, method, uri,NULL, headers, 0, NULL, ws);
     free(headers);
