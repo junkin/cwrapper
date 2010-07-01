@@ -39,18 +39,24 @@ For instance, to create a new, empty object in the cloud, you would create a ws_
 
 This creates the object using the namespace API (all namespace api calls end with _ns)
 
+
 Source Code
 -----------
 
-The source code is seperated at the transport, helper and atmos specific levels.
+The source code is seperated at the transport, crypto, helper and atmos specific levels.
 
     * transport currently uses libcurl, transport.h and transport.c can be replaced with any other method of making http calls provided the http_request function definition is used.
-    *util holds the signing mechanism from openssl for base64 and crypto HMAC functions. 
+    * crypto holds the signing mechanism from openssl for base64 and crypto HMAC functions. 
     * atmos_rest has the atmos specific functions and sit atop the features provided by transport and util.
+    * helper are simple functions
+
+
 Todo:
+object interface
+acl
+shared urls
 autoconf
 win32 support dll & build
-dyanmic libs
 ACL support
 chunked transfer's
 

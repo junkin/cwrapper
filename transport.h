@@ -15,8 +15,6 @@ typedef struct PD {
     size_t bytes_remaining;
     size_t offset;
     size_t bytes_written;
-
-  
 }postdata;
 
 typedef struct hdrval {
